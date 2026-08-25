@@ -176,6 +176,39 @@ export const apiClient = {
   },
 
   /**
+   * Fetch saved room analysis history
+   */
+  async getRoomHistory(limit = 30, offset = 0) {
+    const res = await fetch(`${API_BASE_URL}/rooms/history?limit=${limit}&offset=${offset}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch room history");
+    return await res.json();
+  },
+
+  /**
+   * Recall a saved room session in 0ms without re-running GPU
+   */
+  async getSavedRoom(roomId) {
+    const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to load saved room session");
+    return await res.json();
+  },
+
+  /**
+   * Delete a saved room from database and storage
+   */
+  async deleteSavedRoom(roomId) {
+    const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete saved room");
+    return await res.json();
+  },
+
+  /**
    * Reset Backend Session
    */
   async resetSession() {

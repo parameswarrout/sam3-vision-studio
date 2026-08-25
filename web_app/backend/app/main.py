@@ -7,11 +7,17 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.core import sam3_service, logger
 from app.api.router import api_router
+from app.db import init_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle manager: Automatically preloads the SAM 3 model into memory."""
+    """Lifecycle manager: Automatically initializes database and preloads the SAM 3 model."""
     logger.info(f"Initializing {settings.PROJECT_NAME} v{settings.VERSION}")
+    try:
+        await init_db()
+    except Exception as db_err:
+        logger.error(f"Database initialization error: {db_err}")
+
     try:
         if os.path.exists(settings.DEFAULT_CHECKPOINT):
             sam3_service.ensure_model()

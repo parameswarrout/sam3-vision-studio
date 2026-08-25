@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Layers, Loader2, CheckCircle2, Wand2, Home, Sparkles, Cpu } from "lucide-react";
+import { Layers, Loader2, CheckCircle2, Wand2, Home, Sparkles, Cpu, History } from "lucide-react";
 import { Badge } from "./Badge";
 import { DeviceSelector } from "./DeviceSelector";
 
@@ -64,6 +64,7 @@ export function Header({
   onSwitchDevice,
   isSwitchingDevice,
   activeNav = "manual",
+  onOpenHistory,
 }) {
   const isModelLoaded = Boolean(health?.model_loaded);
 
@@ -139,8 +140,21 @@ export function Header({
           </Link>
         </nav>
 
-        {/* Right: Server / Compute Device Controls */}
+        {/* Right: Server / Compute Device Controls & History Button */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* History Button (Opens SQLite Saved Rooms Drawer) */}
+          {activeNav === "room-analysis" && onOpenHistory && (
+            <button
+              type="button"
+              onClick={onOpenHistory}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm active:scale-95"
+              title="Open Saved Room Analyses History"
+            >
+              <History className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">History</span>
+            </button>
+          )}
+
           <DeviceSelector
             currentDevice={health?.device}
             isOnline={isOnline}

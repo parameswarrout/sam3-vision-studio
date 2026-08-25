@@ -5,11 +5,13 @@ import { useBackendHealth } from "@/hooks/useBackendHealth";
 import { useRoomAnalysis } from "@/hooks/useRoomAnalysis";
 import { Header } from "@/components/common/Header";
 import { RoomAnalysisWorkspace } from "@/components/v2_room_analysis/RoomAnalysisWorkspace";
+import { RoomHistoryDrawer } from "@/components/v2_room_analysis/RoomHistoryDrawer";
 import { apiClient } from "@/lib/api";
 
 export default function RoomAnalysisPage() {
   const { health, isOnline, refetch } = useBackendHealth();
   const [isSwitchingDevice, setIsSwitchingDevice] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const {
     previewUrl,
@@ -23,6 +25,7 @@ export default function RoomAnalysisPage() {
     hoveredRegionId,
     setHoveredRegionId,
     analyzeImage,
+    loadSavedRoom,
     toggleRegion,
     toggleCategory,
     showOnlyCategory,
@@ -43,7 +46,7 @@ export default function RoomAnalysisPage() {
     }
   };
 
-  // Global Keyboard Shortcuts (Space to toggle all, 1-5 for quick filter solo)
+  // Global Keyboard Shortcuts (Space to toggle all, 1-5 for quick filter solo, H for history)
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Don't trigger if user is typing in an input field
@@ -66,8 +69,11 @@ export default function RoomAnalysisPage() {
         showOnlyCategory("openings");
       } else if (e.key === "5") {
         showOnlyCategory("furniture");
+      } else if (e.key === "h" || e.key === "H") {
+        setIsHistoryOpen((prev) => !prev);
       } else if (e.key === "Escape") {
         setHoveredRegionId(null);
+        setIsHistoryOpen(false);
       }
     };
 
@@ -77,13 +83,14 @@ export default function RoomAnalysisPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-950">
-      {/* 1. Top Navbar Header with Navigation Tabs */}
+      {/* 1. Top Navbar Header with Navigation Tabs & History Trigger */}
       <Header
         health={health}
         isOnline={isOnline}
         onSwitchDevice={handleSwitchDevice}
         isSwitchingDevice={isSwitchingDevice}
         activeNav="room-analysis"
+        onOpenHistory={() => setIsHistoryOpen(true)}
       />
 
       {/* 2. Main Full-Width Single-Screen Workspace with Balanced Margins */}
@@ -106,8 +113,19 @@ export default function RoomAnalysisPage() {
           onShowAll={showAllRegions}
           onHideAll={hideAllRegions}
           onReset={reset}
+          onOpenHistory={() => setIsHistoryOpen(true)}
         />
       </main>
+
+      {/* 3. Slide-Over Saved History Drawer (0ms SQLite Recall) */}
+      <RoomHistoryDrawer
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        onSelectRoom={(savedRoom) => {
+          loadSavedRoom(savedRoom);
+          setIsHistoryOpen(false);
+        }}
+      />
     </div>
   );
 }

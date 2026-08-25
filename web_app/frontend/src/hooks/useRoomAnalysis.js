@@ -72,6 +72,47 @@ export function useRoomAnalysis() {
     }
   }, []);
 
+  const loadSavedRoom = useCallback(async (roomSummary) => {
+    try {
+      setIsAnalyzing(true);
+      setError(null);
+      setProgressPercent(50);
+      setProgressStage("Retrieving saved session from database...");
+
+      const fullRoom = await apiClient.getSavedRoom(roomSummary.id);
+
+      // Use thumbnail preview or data uri
+      setPreviewUrl(roomSummary.thumbnail_base64 || "");
+      setImageMeta({
+        width: fullRoom.img_width,
+        height: fullRoom.img_height,
+        name: fullRoom.room_title || "Saved Room",
+      });
+
+      const formattedResult = {
+        image_hash: fullRoom.image_hash,
+        image_width: fullRoom.img_width,
+        image_height: fullRoom.img_height,
+        overall_confidence: fullRoom.overall_confidence,
+        quality_scores: fullRoom.quality_scores,
+        execution_time_ms: fullRoom.execution_time_ms,
+        regions: fullRoom.regions,
+        metadata: fullRoom.metadata,
+      };
+
+      setAnalysisResult(formattedResult);
+      const allIds = new Set((fullRoom.regions || []).map((r) => r.id));
+      setVisibleRegions(allIds);
+      setProgressPercent(100);
+      setProgressStage("Loaded from SQLite database (0ms GPU)");
+    } catch (err) {
+      console.error("[useRoomAnalysis] Failed to load saved room:", err);
+      setError(err.message || "Failed to load saved room.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, []);
+
   const toggleRegion = useCallback((regionId) => {
     setVisibleRegions((prev) => {
       const next = new Set(prev);
@@ -125,7 +166,7 @@ export function useRoomAnalysis() {
   }, []);
 
   const reset = useCallback(() => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
     setImageFile(null);
     setPreviewUrl(null);
     setImageMeta(null);
@@ -151,6 +192,7 @@ export function useRoomAnalysis() {
     selectedFilter,
     setSelectedFilter,
     analyzeImage,
+    loadSavedRoom,
     toggleRegion,
     toggleCategory,
     showOnlyCategory,
