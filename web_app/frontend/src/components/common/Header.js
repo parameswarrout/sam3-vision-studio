@@ -16,6 +16,7 @@ import {
   LogIn,
   Shield,
   ChevronDown,
+  UserPlus,
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { DeviceSelector } from "./DeviceSelector";
@@ -160,7 +161,7 @@ export function Header({
           </Link>
         </nav>
 
-        {/* Right: History, Device, Model Status & User Profile */}
+        {/* Right: History, Device, Model Status & Prominent Sign In */}
         <div className="flex items-center gap-2.5 shrink-0">
           {/* History Button (Opens SQLite Saved Rooms Drawer) */}
           {activeNav === "room-analysis" && onOpenHistory && (
@@ -204,74 +205,83 @@ export function Header({
             )}
           </div>
 
-          {/* User Profile & Auth Trigger */}
-          <div className="relative">
+          {/* Prominent Direct Sign In / Sign Up Button or User Profile */}
+          {!isAuthenticated ? (
             <button
               type="button"
-              onClick={() => setIsUserMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700/80 text-white transition-all shadow-sm"
-              title="User profile & auth settings"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition-all active:scale-95 border border-white/20"
             >
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-white text-[11px] font-black shadow-inner">
-                {user.full_name ? user.full_name[0].toUpperCase() : "U"}
-              </div>
-              <div className="hidden sm:flex flex-col items-start text-left">
-                <span className="text-[11px] font-extrabold truncate max-w-[100px]">
-                  {user.full_name || "Architect"}
-                </span>
-                <span className="text-[9px] font-mono text-indigo-400 font-bold uppercase">
-                  {user.role}
-                </span>
-              </div>
-              <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
             </button>
-
-            {/* Dropdown Menu */}
-            {isUserMenuOpen && (
-              <div
-                onMouseLeave={() => setIsUserMenuOpen(false)}
-                className="absolute right-0 top-12 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 flex flex-col gap-1.5 animate-in fade-in duration-150"
+          ) : (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700/80 text-white transition-all shadow-sm"
+                title="User profile & auth settings"
               >
-                <div className="p-2 border-b border-slate-800 text-xs">
-                  <p className="font-bold text-white truncate">{user.full_name}</p>
-                  <p className="text-[10px] text-slate-400 font-mono truncate">{user.email || "Local Development Mode"}</p>
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-white text-[11px] font-black shadow-inner">
+                  {user.full_name ? user.full_name[0].toUpperCase() : "U"}
                 </div>
-
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase font-mono font-bold text-slate-500 px-2">
-                    Quick Role Switch:
+                <div className="hidden sm:flex flex-col items-start text-left">
+                  <span className="text-[11px] font-extrabold truncate max-w-[100px]">
+                    {user.full_name || "Architect"}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoRole("admin");
-                      setIsUserMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between ${
-                      user.role === "admin" ? "bg-indigo-600/30 text-indigo-200" : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    <span>Lead Architect (Admin)</span>
-                    {user.role === "admin" && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoRole("client");
-                      setIsUserMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between ${
-                      user.role === "client" ? "bg-indigo-600/30 text-indigo-200" : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    <span>Client (View-Only)</span>
-                    {user.role === "client" && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
-                  </button>
+                  <span className="text-[9px] font-mono text-indigo-400 font-bold uppercase">
+                    {user.role}
+                  </span>
                 </div>
+                <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
+              </button>
 
-                <div className="pt-1 border-t border-slate-800">
-                  {isAuthenticated ? (
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <div
+                  onMouseLeave={() => setIsUserMenuOpen(false)}
+                  className="absolute right-0 top-12 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 flex flex-col gap-1.5 animate-in fade-in duration-150"
+                >
+                  <div className="p-2 border-b border-slate-800 text-xs">
+                    <p className="font-bold text-white truncate">{user.full_name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono truncate">{user.email || "Local Development Mode"}</p>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] uppercase font-mono font-bold text-slate-500 px-2">
+                      Quick Role Switch:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchDemoRole("admin");
+                        setIsUserMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between ${
+                        user.role === "admin" ? "bg-indigo-600/30 text-indigo-200" : "text-slate-300 hover:bg-slate-800"
+                      }`}
+                    >
+                      <span>Lead Architect (Admin)</span>
+                      {user.role === "admin" && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchDemoRole("client");
+                        setIsUserMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between ${
+                        user.role === "client" ? "bg-indigo-600/30 text-indigo-200" : "text-slate-300 hover:bg-slate-800"
+                      }`}
+                    >
+                      <span>Client (View-Only)</span>
+                      {user.role === "client" && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                    </button>
+                  </div>
+
+                  <div className="pt-1 border-t border-slate-800">
                     <button
                       type="button"
                       onClick={() => {
@@ -283,23 +293,11 @@ export function Header({
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Log Out</span>
                     </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAuthModalOpen(true);
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold text-indigo-300 hover:bg-indigo-950/40 flex items-center gap-2 transition-all"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>Sign In / Register</span>
-                    </button>
-                  )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
