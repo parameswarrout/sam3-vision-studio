@@ -1,0 +1,29 @@
+# Meta Segment Anything Model 3 (SAM 3) — AI Coding Rules & Context
+
+You are working on the Meta SAM 3 Vision Studio repository — a production fullstack application pairing Meta's Segment Anything 3 vision model with a Python FastAPI backend and a Next.js 14 frontend.
+
+## Architecture Guidelines
+- **Backend Architecture:**
+  - Framework: FastAPI with Uvicorn.
+  - Structure: `web_app/backend/app/`
+    - `core/sam3_service.py`: Singleton managing model weights, CUDA/CPU device state, and feature embeddings.
+    - `core/mask_engine.py`: Vectorized NumPy/PIL mask compositing & Base64 encoder.
+    - `core/logger.py`: Structured namespaced logging (`sam3.server`, `sam3.model`, `sam3.api`).
+    - `schemas/requests.py`: Strict Pydantic models for validation.
+    - `api/v1/`: Modular route handlers for `/health`, `/device/switch`, `/set-image`, `/segment-text`, `/segment-points`.
+  - Always use `run.py` to launch backend so `sys.path[0]` prioritizes `web_app/backend`.
+  - Do NOT use raw `print()` statements — use `logger`, `model_logger`, or `api_logger`.
+
+- **Frontend Architecture:**
+  - Framework: Next.js 14 (App Router) in pure JavaScript (`.js` / `.jsx`), Tailwind CSS, Lucide icons.
+  - Structure: `web_app/frontend/src/`
+    - `components/canvas/InteractiveCanvas.js`: Dual-pane Gradio-style view (Input on Left, Output on Right).
+    - `components/common/Header.js`: Navbar with live health poller & dynamic CUDA/CPU switcher.
+    - `hooks/useSamSession.js`: State manager for points, text queries, confidence, and mask states.
+    - `lib/api.js`: XMLHttpRequest client with real-time percentage upload tracking.
+
+## Coding Standards
+1. **Coordinate Normalization:** Interactive canvas clicks must be normalized to `[0.0, 1.0]` before sending to the backend.
+2. **Device Safety:** Check `torch.cuda.is_available()` before allocating CUDA memory; fallback gracefully to CPU.
+3. **No Deprecations:** Always use `timm.layers` (not `timm.models.layers`) and standard library `importlib` (not `pkg_resources`).
+4. **Clean Logging:** Keep log outputs structured with timestamps and clear log levels.

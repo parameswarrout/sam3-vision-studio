@@ -1,0 +1,43 @@
+# Node & Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+.env
+.env*
+.env*.local
+
+# Python & FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Large Model Binaries & Weights (Never commit to GitHub directly)
+*.pt
+*.pth
+*.bin
+*.onnx
+checkpoints/
+models/
+sam3/checkpoints/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

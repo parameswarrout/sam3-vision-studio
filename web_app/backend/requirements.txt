@@ -1,0 +1,14 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+python-multipart>=0.0.9
+pillow>=10.2.0
+numpy>=1.26.0
+iopath>=0.1.10
+portalocker>=4.3.0
+pycocotools>=2.0.11
+timm>=1.0.17
+ftfy>=6.1.1
+regex
+einops>=0.8.0
+torch
