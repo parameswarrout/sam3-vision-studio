@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   History,
   X,
@@ -20,6 +21,11 @@ export function RoomHistoryDrawer({ isOpen, onClose, onSelectRoom }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchHistory = async () => {
     try {
@@ -55,15 +61,15 @@ export function RoomHistoryDrawer({ isOpen, onClose, onSelectRoom }) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex justify-end bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+  const drawerContent = (
+    <div className="fixed inset-0 z-[9999] flex justify-end bg-slate-950/80 backdrop-blur-xl animate-in fade-in duration-200">
       {/* Backdrop click to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Slide-out Drawer Panel */}
-      <div className="relative w-full max-w-md bg-slate-900/95 border-l border-slate-700/80 shadow-2xl h-full flex flex-col z-10">
+      <div className="relative w-full max-w-md bg-slate-900/95 border-l border-slate-700/80 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-200">
         {/* Drawer Header */}
         <div className="p-4 border-b border-slate-700/80 flex items-center justify-between bg-slate-950/80">
           <div className="flex items-center gap-2.5">
@@ -199,4 +205,6 @@ export function RoomHistoryDrawer({ isOpen, onClose, onSelectRoom }) {
       </div>
     </div>
   );
+
+  return createPortal(drawerContent, document.body);
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Lock, Mail, User, Shield, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 
 export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
@@ -11,8 +12,13 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
   const [role, setRole] = useState("architect");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,13 +39,13 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      {/* Backdrop */}
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-in fade-in duration-200">
+      {/* Click backdrop to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* Modal Box (Centered & elevated) */}
-      <div className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700 shadow-2xl shadow-black/80 p-6 z-10 flex flex-col gap-4 my-auto">
+      {/* Dead-Center Modal Box */}
+      <div className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700/80 shadow-2xl shadow-black p-6 sm:p-7 z-10 flex flex-col gap-4 m-auto">
         {/* Close Button */}
         <button
           type="button"
@@ -51,12 +57,12 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
 
         {/* Modal Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-md">
-            <Shield className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-md">
+            <Shield className="w-6 h-6" />
           </div>
           <div>
             <h3 className="text-base font-black text-white">Studio Authentication</h3>
-            <p className="text-xs text-slate-400">Multi-Tenancy & Project Isolation</p>
+            <p className="text-xs text-slate-400">Meta SAM 3 Multi-User & Project Access</p>
           </div>
         </div>
 
@@ -68,9 +74,9 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
               setTab("login");
               setError(null);
             }}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
               tab === "login"
-                ? "bg-indigo-600 text-white shadow-md"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -82,9 +88,9 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
               setTab("register");
               setError(null);
             }}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
               tab === "register"
-                ? "bg-indigo-600 text-white shadow-md"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -165,7 +171,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 active:scale-98"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -178,4 +184,6 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
