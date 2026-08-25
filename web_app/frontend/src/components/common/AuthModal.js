@@ -34,12 +34,12 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       {/* Backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* Modal Box */}
-      <div className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700 shadow-2xl p-6 z-10 flex flex-col gap-4">
+      {/* Modal Box (Centered & elevated) */}
+      <div className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700 shadow-2xl shadow-black/80 p-6 z-10 flex flex-col gap-4 my-auto">
         {/* Close Button */}
         <button
           type="button"

@@ -241,7 +241,7 @@ export function Header({
               {isUserMenuOpen && (
                 <div
                   onMouseLeave={() => setIsUserMenuOpen(false)}
-                  className="absolute right-0 top-12 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 flex flex-col gap-1.5 animate-in fade-in duration-150"
+                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-slate-900/95 border border-slate-700/90 shadow-2xl shadow-black/80 backdrop-blur-2xl p-2 z-[60] flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150"
                 >
                   <div className="p-2 border-b border-slate-800 text-xs">
                     <p className="font-bold text-white truncate">{user.full_name}</p>

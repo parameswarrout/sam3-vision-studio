@@ -58,7 +58,7 @@ export function RoomHistoryDrawer({ isOpen, onClose, onSelectRoom }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex justify-end bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
       {/* Backdrop click to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
