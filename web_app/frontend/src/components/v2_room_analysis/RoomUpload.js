@@ -104,7 +104,7 @@ export function RoomUpload({ onUpload, isAnalyzing }) {
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-between py-1 px-1 gap-3 overflow-y-auto">
+    <div className="w-full max-w-[1600px] mx-auto h-full flex flex-col justify-between py-1 gap-4 overflow-y-auto">
       {/* 1. Main Hero Dropzone Banner */}
       <div
         onDragOver={(e) => {
