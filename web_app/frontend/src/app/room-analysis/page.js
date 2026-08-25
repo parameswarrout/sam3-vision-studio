@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBackendHealth } from "@/hooks/useBackendHealth";
 import { useRoomAnalysis } from "@/hooks/useRoomAnalysis";
 import { Header } from "@/components/common/Header";
@@ -42,6 +42,38 @@ export default function RoomAnalysisPage() {
       setIsSwitchingDevice(false);
     }
   };
+
+  // Global Keyboard Shortcuts (Space to toggle all, 1-5 for quick filter solo)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input field
+      if (["INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (visibleRegions.size > 0) {
+          hideAllRegions();
+        } else {
+          showAllRegions();
+        }
+      } else if (e.key === "1") {
+        showAllRegions();
+      } else if (e.key === "2") {
+        showOnlyCategory("wall");
+      } else if (e.key === "3") {
+        showOnlyCategory("floor");
+      } else if (e.key === "4") {
+        showOnlyCategory("openings");
+      } else if (e.key === "5") {
+        showOnlyCategory("furniture");
+      } else if (e.key === "Escape") {
+        setHoveredRegionId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [visibleRegions, showAllRegions, hideAllRegions, showOnlyCategory, setHoveredRegionId]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-950">

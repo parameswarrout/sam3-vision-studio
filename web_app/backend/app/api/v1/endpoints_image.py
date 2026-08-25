@@ -1,6 +1,6 @@
 import io
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from PIL import Image
+from PIL import Image, ImageOps
 
 from app.core import sam3_service, MaskEngine, api_logger
 
@@ -16,7 +16,8 @@ async def upload_and_set_image(file: UploadFile = File(...)):
     try:
         api_logger.info(f"Receiving image upload: filename='{file.filename}', content_type='{file.content_type}'")
         image_bytes = await file.read()
-        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        raw_image = Image.open(io.BytesIO(image_bytes))
+        image = ImageOps.exif_transpose(raw_image).convert("RGB")
         info = sam3_service.set_image(image)
         base64_img = MaskEngine.pil_to_base64(image)
         
