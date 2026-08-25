@@ -5,19 +5,53 @@ import { Layers, Loader2, CheckCircle2, Wand2, Home, Sparkles, Cpu } from "lucid
 import { Badge } from "./Badge";
 import { DeviceSelector } from "./DeviceSelector";
 
-// Meta AI Infinite Loop SVG Icon
-function MetaLogo({ className = "w-5 h-5" }) {
+// Futuristic AI Vision Transformer & Neural Segmentation Matrix Logo
+function VisionTransformerLogo({ className = "w-6 h-6" }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path
-        d="M6.98 5.75C4.22 5.75 2 7.97 2 10.73c0 3.32 3.19 6.84 8.78 10.97.7.52 1.74.52 2.44 0C18.81 17.57 22 14.05 22 10.73c0-2.76-2.22-4.98-4.98-4.98-1.89 0-3.57 1.05-4.42 2.65-.25.47-.95.47-1.2 0-.85-1.6-2.53-2.65-4.42-2.65Z"
-        fill="url(#meta-grad)"
+    <svg viewBox="0 0 32 32" fill="none" className={className}>
+      {/* Outer Vision Aperture Frame */}
+      <rect
+        x="3"
+        y="3"
+        width="26"
+        height="26"
+        rx="8"
+        stroke="url(#vt-grad-frame)"
+        strokeWidth="1.75"
+        strokeDasharray="4 2"
+        className="opacity-70"
       />
+
+      {/* 4 Corner Optical Focus Crosshairs */}
+      <path d="M7 11V7H11" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21 7H25V11" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M25 21V25H21" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 25H7V21" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Vision Transformer Neural Patch Matrix (3x3 Token Grid) */}
+      <rect x="9" y="9" width="3.5" height="3.5" rx="1" fill="#6366F1" />
+      <rect x="14.25" y="9" width="3.5" height="3.5" rx="1" fill="#818CF8" />
+      <rect x="19.5" y="9" width="3.5" height="3.5" rx="1" fill="#6366F1" />
+
+      <rect x="9" y="14.25" width="3.5" height="3.5" rx="1" fill="#818CF8" />
+      {/* Central Transformer Attention Node (Glowing Core) */}
+      <rect x="13.75" y="13.75" width="4.5" height="4.5" rx="1.5" fill="url(#vt-core-grad)" />
+      <rect x="19.5" y="14.25" width="3.5" height="3.5" rx="1" fill="#818CF8" />
+
+      <rect x="9" y="19.5" width="3.5" height="3.5" rx="1" fill="#6366F1" />
+      <rect x="14.25" y="19.5" width="3.5" height="3.5" rx="1" fill="#818CF8" />
+      <rect x="19.5" y="19.5" width="3.5" height="3.5" rx="1" fill="#6366F1" />
+
+      {/* Gradients */}
       <defs>
-        <linearGradient id="meta-grad" x1="2" y1="5.75" x2="22" y2="21.7" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0081FB" />
-          <stop offset="0.5" stopColor="#0064E0" />
-          <stop offset="1" stopColor="#8A3FFC" />
+        <linearGradient id="vt-grad-frame" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#38BDF8" />
+          <stop offset="0.5" stopColor="#6366F1" />
+          <stop offset="1" stopColor="#A855F7" />
+        </linearGradient>
+        <linearGradient id="vt-core-grad" x1="13.75" y1="13.75" x2="18.25" y2="18.25" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#38BDF8" />
+          <stop offset="1" stopColor="#FFFFFF" />
         </linearGradient>
       </defs>
     </svg>
@@ -39,9 +73,9 @@ export function Header({
         {/* Left: Brand / Title */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300" />
-            <div className="relative w-10 h-10 rounded-2xl bg-slate-900 border border-white/15 flex items-center justify-center shadow-inner">
-              <MetaLogo className="w-6 h-6" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 rounded-2xl blur-sm opacity-70 group-hover:opacity-100 transition duration-300" />
+            <div className="relative w-10 h-10 rounded-2xl bg-slate-950 border border-indigo-500/40 flex items-center justify-center shadow-inner">
+              <VisionTransformerLogo className="w-7 h-7" />
             </div>
           </div>
 
@@ -50,14 +84,14 @@ export function Header({
               <span className="font-black text-lg text-white tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
                 SAM 3
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600/30 to-indigo-600/30 text-indigo-200 font-mono font-extrabold border border-indigo-500/40 shadow-sm">
-                VISION STUDIO
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600/30 to-sky-600/30 text-sky-200 font-mono font-extrabold border border-sky-500/40 shadow-sm">
+                VISION TRANSFORMER
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1.5 mt-0.5">
-              <span>Meta AI Foundation</span>
+              <span>Meta Vision Foundation</span>
               <span className="w-1 h-1 rounded-full bg-slate-600" />
-              <span className="text-slate-300">Decoupled Fast Architecture</span>
+              <span className="text-slate-300">Fast Neural Engine</span>
             </p>
           </div>
         </div>
