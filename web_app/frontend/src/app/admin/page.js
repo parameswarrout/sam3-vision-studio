@@ -20,8 +20,13 @@ import {
   Server,
   UserCheck,
   TrendingUp,
+  UserPlus,
+  Edit2,
+  Trash2,
+  KeyRound,
 } from "lucide-react";
 import { Header } from "@/components/common/Header";
+import { UserManageModal } from "@/components/admin/UserManageModal";
 import { useBackendHealth } from "@/hooks/useBackendHealth";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api";
@@ -33,10 +38,14 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [logins, setLogins] = useState([]);
   const [usersList, setUsersList] = useState([]);
-  const [activeTab, setActiveTab] = useState("logins"); // 'logins' | 'users'
+  const [activeTab, setActiveTab] = useState("users"); // 'users' | 'logins'
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
+
+  // User CRUD Modal State
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -63,6 +72,36 @@ export default function AdminDashboardPage() {
     const interval = setInterval(fetchData, 12000); // 12s live telemetry polling
     return () => clearInterval(interval);
   }, [token]);
+
+  const handleSaveUser = async (payload, userId = null) => {
+    if (userId) {
+      // Update
+      const updated = await apiClient.updateUserAdmin(token, userId, payload);
+      setUsersList((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+    } else {
+      // Create
+      const created = await apiClient.createUserAdmin(token, payload);
+      setUsersList((prev) => [...prev, created]);
+    }
+    fetchData();
+  };
+
+  const handleDeleteUser = async (targetUser) => {
+    if (targetUser.email === "pa") {
+      alert("Cannot delete Primary Administrator 'pa'.");
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete user '${targetUser.full_name}' (${targetUser.email})?`)) {
+      return;
+    }
+
+    try {
+      await apiClient.deleteUserAdmin(token, targetUser.id);
+      setUsersList((prev) => prev.filter((u) => u.id !== targetUser.id));
+    } catch (err) {
+      alert(`Delete failed: ${err.message}`);
+    }
+  };
 
   const handleRoleChange = async (userId, newRole) => {
     try {
@@ -116,20 +155,32 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Real-time user login audit trail, hardware telemetry & project storage metrics.
+                Real-time user login audit trail, hardware telemetry, and team account management.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setEditingUser(null);
+                setIsUserModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition-all active:scale-95"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Add New User</span>
+            </button>
+
             <button
               type="button"
               onClick={fetchData}
               disabled={isRefreshing}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition-all shadow-sm disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition-all shadow-sm disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-indigo-400" : ""}`} />
-              <span>Refresh Telemetry</span>
+              <span>Refresh</span>
             </button>
           </div>
         </div>
@@ -146,7 +197,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-2xl sm:text-3xl font-black text-white">
-                {stats?.total_users ?? 1}
+                {usersList.length || stats?.total_users || 1}
               </span>
               <span className="text-[11px] font-mono text-emerald-400 font-bold">Studio Accounts</span>
             </div>
@@ -202,9 +253,25 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* 2. Navigation Tabs (Login Audits vs User Roster) */}
+        {/* 2. Navigation Tabs (User Roster vs Login Audits) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
           <div className="flex items-center p-1 rounded-2xl bg-slate-900 border border-slate-800 self-start">
+            <button
+              type="button"
+              onClick={() => setActiveTab("users")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === "users"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Studio Team Accounts & Roles</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/30 font-mono font-bold">
+                {usersList.length}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={() => setActiveTab("logins")}
@@ -216,24 +283,8 @@ export default function AdminDashboardPage() {
             >
               <Activity className="w-3.5 h-3.5" />
               <span>Login & Access Audit Trail</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/30 font-mono">
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/30 font-mono font-bold">
                 {logins.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("users")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === "users"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>Studio Team Accounts</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/30 font-mono">
-                {usersList.length}
               </span>
             </button>
           </div>
@@ -249,7 +300,134 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* 3. Main Data Panels */}
+        {/* 3. Studio Team Accounts Panel (Full CRUD) */}
+        {activeTab === "users" && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950/80 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
+                  <tr>
+                    <th className="px-4 py-3">Account / Member</th>
+                    <th className="px-4 py-3">Username / Email</th>
+                    <th className="px-4 py-3">Role & Permissions</th>
+                    <th className="px-4 py-3">Account Status</th>
+                    <th className="px-4 py-3">Last Active / Login</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {usersList.map((u) => {
+                    const isPrimaryAdmin = u.email === "pa";
+                    const lastLoginStr = u.last_login_at
+                      ? new Date(u.last_login_at).toLocaleString()
+                      : "Never / Default";
+
+                    return (
+                      <tr key={u.id} className="hover:bg-slate-850/60 transition-colors">
+                        {/* Name & Avatar */}
+                        <td className="px-4 py-3 font-bold text-white">
+                          <div className="flex items-center gap-2.5">
+                            {isPrimaryAdmin ? (
+                              <img
+                                src="/avatar_pa_thumb.jpg"
+                                alt="PA"
+                                className="w-8 h-8 rounded-full object-cover border-2 border-indigo-400 shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-black text-indigo-400">
+                                {u.full_name[0]?.toUpperCase() || "U"}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-black text-xs text-white">{u.full_name}</p>
+                              {isPrimaryAdmin && (
+                                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase">
+                                  Primary Admin
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Email */}
+                        <td className="px-4 py-3 font-mono text-slate-300">
+                          {u.email || "Local Development"}
+                        </td>
+
+                        {/* Role Select */}
+                        <td className="px-4 py-3">
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                            disabled={isPrimaryAdmin}
+                            className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white font-mono font-bold focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                          >
+                            <option value="admin">ADMIN (Full Control)</option>
+                            <option value="architect">ARCHITECT (Analyze & Edit)</option>
+                            <option value="client">CLIENT (View-Only)</option>
+                          </select>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-mono text-[10px] font-bold ${
+                              u.is_active
+                                ? "bg-emerald-950/60 border border-emerald-500/30 text-emerald-400"
+                                : "bg-rose-950/60 border border-rose-500/30 text-rose-400"
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                u.is_active ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+                              }`}
+                            />
+                            <span>{u.is_active ? "ACTIVE" : "SUSPENDED"}</span>
+                          </span>
+                        </td>
+
+                        {/* Last Login */}
+                        <td className="px-4 py-3 font-mono text-[11px] text-slate-400">
+                          {lastLoginStr}
+                        </td>
+
+                        {/* Action Buttons (Edit / Delete) */}
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingUser(u);
+                                setIsUserModalOpen(true);
+                              }}
+                              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 text-indigo-300 hover:text-white transition-all shadow-sm"
+                              title="Edit user details or reset password"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {!isPrimaryAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteUser(u)}
+                                className="p-1.5 rounded-lg bg-slate-950 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 transition-all shadow-sm"
+                                title="Delete user account"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* 4. Live Login Audit Trail Panel */}
         {activeTab === "logins" && (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl">
             <div className="overflow-x-auto">
@@ -347,101 +525,18 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
-
-        {/* 4. Users Roster Panel */}
-        {activeTab === "users" && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/80 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
-                  <tr>
-                    <th className="px-4 py-3">Account / Name</th>
-                    <th className="px-4 py-3">Username / Email</th>
-                    <th className="px-4 py-3">Role & Permissions</th>
-                    <th className="px-4 py-3">Account Status</th>
-                    <th className="px-4 py-3">Last Active / Login</th>
-                    <th className="px-4 py-3 text-right">Created Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {usersList.map((u) => {
-                    const createdStr = new Date(u.created_at).toLocaleDateString();
-                    const lastLoginStr = u.last_login_at
-                      ? new Date(u.last_login_at).toLocaleString()
-                      : "Never / Default";
-
-                    return (
-                      <tr key={u.id} className="hover:bg-slate-850/60 transition-colors">
-                        {/* Name */}
-                        <td className="px-4 py-3 font-bold text-white">
-                          <div className="flex items-center gap-2.5">
-                            {u.email === "pa" ? (
-                              <img
-                                src="/avatar_pa_thumb.jpg"
-                                alt="PA"
-                                className="w-7 h-7 rounded-full object-cover border border-indigo-400 shadow-sm"
-                              />
-                            ) : (
-                              <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-black text-indigo-400">
-                                {u.full_name[0]?.toUpperCase() || "U"}
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-black text-xs text-white">{u.full_name}</p>
-                              {u.email === "pa" && (
-                                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase">
-                                  Primary Admin
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Email */}
-                        <td className="px-4 py-3 font-mono text-slate-300">
-                          {u.email || "Local Development"}
-                        </td>
-
-                        {/* Role Select */}
-                        <td className="px-4 py-3">
-                          <select
-                            value={u.role}
-                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                            disabled={u.email === "pa"} // Prevent downgrading primary admin PA
-                            className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white font-mono font-bold focus:outline-none focus:border-indigo-500 disabled:opacity-50"
-                          >
-                            <option value="admin">ADMIN (Full Access)</option>
-                            <option value="architect">ARCHITECT (Analysis & Edit)</option>
-                            <option value="client">CLIENT (View-Only)</option>
-                          </select>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            <span>Active</span>
-                          </span>
-                        </td>
-
-                        {/* Last Login */}
-                        <td className="px-4 py-3 font-mono text-[11px] text-slate-300">
-                          {lastLoginStr}
-                        </td>
-
-                        {/* Created Date */}
-                        <td className="px-4 py-3 text-right font-mono text-[11px] text-slate-400">
-                          {createdStr}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </main>
+
+      {/* User Management & Password Reset Modal */}
+      <UserManageModal
+        isOpen={isUserModalOpen}
+        onClose={() => {
+          setIsUserModalOpen(false);
+          setEditingUser(null);
+        }}
+        onSave={handleSaveUser}
+        editingUser={editingUser}
+      />
     </div>
   );
 }

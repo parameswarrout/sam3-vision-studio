@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import sam3_service
 from app.core.auth import require_role
+from app.core.security import hash_password
 from app.db import get_db
 from app.db.models import User
 from app.db.user_repository import UserRepository
@@ -30,6 +31,20 @@ class AdminUserItem(BaseModel):
     is_active: bool
     last_login_at: Optional[datetime] = None
     created_at: datetime
+
+class CreateUserAdminRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str = "Studio Member"
+    role: str = "architect" # 'admin', 'architect', 'client'
+    is_active: bool = True
+
+class UpdateUserAdminRequest(BaseModel):
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+    password: Optional[str] = None # Optional password reset
 
 class RoleUpdateRequest(BaseModel):
     role: str # 'admin', 'architect', 'client'
@@ -91,6 +106,105 @@ async def get_all_studio_users(
         for u in users
     ]
 
+@router.post("/users", response_model=AdminUserItem, status_code=status.HTTP_201_CREATED)
+async def create_user_from_admin(
+    req: CreateUserAdminRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_role(["admin"])),
+):
+    """Creates a new user directly from Admin Command Center."""
+    try:
+        user = await UserRepository.create_user(
+            session=db,
+            email=req.email,
+            password=req.password,
+            full_name=req.full_name,
+            role=req.role,
+        )
+        if not req.is_active:
+            user.is_active = False
+            await db.commit()
+            await db.refresh(user)
+
+        return {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "is_active": user.is_active,
+            "last_login_at": user.last_login_at,
+            "created_at": user.created_at,
+        }
+    except ValueError as val_err:
+        raise HTTPException(status_code=400, detail=str(val_err))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
+
+@router.put("/users/{user_id}", response_model=AdminUserItem)
+async def update_user_from_admin(
+    user_id: str,
+    req: UpdateUserAdminRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_role(["admin"])),
+):
+    """Updates user information, permissions, and optional password reset."""
+    target_user = await UserRepository.get_by_id(db, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if req.full_name is not None:
+        target_user.full_name = req.full_name
+    if req.email is not None and req.email.lower() != target_user.email:
+        # Check uniqueness
+        existing = await UserRepository.get_by_email(db, req.email)
+        if existing and existing.id != target_user.id:
+            raise HTTPException(status_code=400, detail=f"Username/Email '{req.email}' is already taken.")
+        target_user.email = req.email.lower()
+    if req.role is not None:
+        if req.role not in ["admin", "architect", "client"]:
+            raise HTTPException(status_code=400, detail="Invalid role. Must be 'admin', 'architect', or 'client'.")
+        # Prevent demoting the primary 'pa' admin
+        if target_user.email == "pa" and req.role != "admin":
+            raise HTTPException(status_code=400, detail="Primary Admin 'pa' cannot be demoted.")
+        target_user.role = req.role
+    if req.is_active is not None:
+        if target_user.email == "pa" and not req.is_active:
+            raise HTTPException(status_code=400, detail="Primary Admin 'pa' cannot be deactivated.")
+        target_user.is_active = req.is_active
+    if req.password:
+        target_user.hashed_password = hash_password(req.password)
+
+    await db.commit()
+    await db.refresh(target_user)
+
+    return {
+        "id": target_user.id,
+        "email": target_user.email,
+        "full_name": target_user.full_name,
+        "role": target_user.role,
+        "is_active": target_user.is_active,
+        "last_login_at": target_user.last_login_at,
+        "created_at": target_user.created_at,
+    }
+
+@router.delete("/users/{user_id}")
+async def delete_user_from_admin(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_role(["admin"])),
+):
+    """Deletes a user from the studio database (Primary Admin 'pa' is protected)."""
+    target_user = await UserRepository.get_by_id(db, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if target_user.email == "pa":
+        raise HTTPException(status_code=400, detail="Cannot delete primary administrator 'pa'.")
+
+    await db.delete(target_user)
+    await db.commit()
+    return {"message": f"User '{target_user.full_name}' ({target_user.email}) successfully deleted.", "user_id": user_id}
+
 @router.patch("/users/{user_id}/role")
 async def update_user_role(
     user_id: str,
@@ -105,6 +219,9 @@ async def update_user_role(
     target_user = await UserRepository.get_by_id(db, user_id)
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found.")
+
+    if target_user.email == "pa" and req.role != "admin":
+        raise HTTPException(status_code=400, detail="Primary Admin 'pa' cannot be demoted.")
 
     target_user.role = req.role
     await db.commit()

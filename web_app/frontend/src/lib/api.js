@@ -293,19 +293,58 @@ export const apiClient = {
   },
 
   /**
-   * Admin Dashboard: Update User Role
+   * Admin Dashboard: Create New User
    */
-  async updateUserRole(token, userId, role) {
+  async createUserAdmin(token, { email, password, full_name, role, is_active = true }) {
     const headers = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
-    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
-      method: "PATCH",
+    const res = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: "POST",
       headers,
-      body: JSON.stringify({ role }),
+      body: JSON.stringify({ email, password, full_name, role, is_active }),
     });
-    if (!res.ok) throw new Error("Failed to update user role");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to create user");
+    }
+    return await res.json();
+  },
+
+  /**
+   * Admin Dashboard: Update User Profile / Password
+   */
+  async updateUserAdmin(token, userId, data) {
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to update user");
+    }
+    return await res.json();
+  },
+
+  /**
+   * Admin Dashboard: Delete User
+   */
+  async deleteUserAdmin(token, userId) {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to delete user");
+    }
     return await res.json();
   },
 
