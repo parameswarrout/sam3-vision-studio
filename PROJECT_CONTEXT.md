@@ -1,7 +1,7 @@
 # Meta Segment Anything Model 3 (SAM 3) — Full Project Context & Architecture Guide
 
 > **Target Audience:** AI Coding Assistants (LLMs, Cursor, Antigravity, Copilot) & Software Engineers.  
-> **Repository Purpose:** Production-grade web interface and decoupled REST API for Meta SAM 3 (Segment Anything 3) open-vocabulary concept segmentation and interactive point-prompting.
+> **Repository Purpose:** Production-grade web interface and decoupled REST API for Meta SAM 3 (Segment Anything 3) open-vocabulary concept segmentation, interactive point-prompting, and autonomous room surface analysis.
 
 ---
 
@@ -10,9 +10,10 @@
 | Component | Technology | Purpose |
 | :--- | :--- | :--- |
 | **Model Engine** | Meta SAM 3 (`sam3.pt`, 3.45 GB) | Vision Foundation model for Open-Vocabulary Grounding & Interactive Point Masking |
+| **V2 Room Engine** | `app/v2_room_analysis/` | Decoupled depth & geometry, evidence-based wall separation, confidence-aware occlusion |
 | **Backend API** | Python 3.11, FastAPI, Uvicorn, PyTorch | Asynchronous REST service for image embedding caching, mask rendering, and device management |
-| **Mask Processing** | OpenCV / PIL / NumPy Vectorized Engine | Color-palette mask alpha blending, bounding box labeling, and Base64 stream encoding |
-| **Frontend UI** | Next.js 14 (App Router), Tailwind CSS, Lucide | Responsive dual-pane canvas (Input Left / Output Right), point pin overlays, upload progress tracking |
+| **Mask Processing** | OpenCV / PIL / NumPy / SciPy Engine | Color-palette mask alpha blending, bounding box labeling, and Base64 stream encoding |
+| **Frontend UI** | Next.js 14 (App Router), Tailwind CSS, Lucide | Dual-pane manual segmentation studio (`/`) & autonomous room analysis workspace (`/room-analysis`) |
 | **Hardware** | NVIDIA CUDA (GPU) & CPU Fallback | Dynamic hot-swapping between CUDA GPU and CPU execution |
 
 ---
@@ -23,6 +24,7 @@
 Segmentation_model_by_meta/
 ├── .cursorrules                         # AI IDE context rule definition
 ├── PROJECT_CONTEXT.md                   # Complete LLM/developer reference (this file)
+├── V2_ROOM_ANALYSIS.md                  # Dedicated SAM 3 V2 Room Analysis Specification
 ├── ARCHITECTURE.md                      # Detailed data flow, schemas & system architecture
 ├── README.md                            # Main project overview & quickstart
 ├── download_sam3.py                     # Checkpoint downloader script from Hugging Face
@@ -43,6 +45,9 @@ Segmentation_model_by_meta/
     ├── backend/                         # FastAPI Python Backend
     │   ├── requirements.txt             # Python backend dependencies
     │   ├── run.py                       # Server entrypoint with custom sys.path prioritization
+    │   ├── tests/                       # Unit and integration test suites
+    │   │   ├── test_room_analyzer.py    # Unit tests for V2 components
+    │   │   └── test_api_v2.py           # Integration & V1 regression test suite
     │   └── app/
     │       ├── __init__.py
     │       ├── config.py                # Pydantic Settings, dynamic paths & CORS configuration
@@ -52,138 +57,59 @@ Segmentation_model_by_meta/
     │       │   ├── logger.py            # Production structured logging (sam3.server, sam3.model, sam3.api)
     │       │   ├── sam3_service.py      # Singleton managing model lifecycle, GPU cache & session state
     │       │   └── mask_engine.py       # High-performance alpha mask blending & BBox rendering
+    │       ├── v2_room_analysis/        # SAM 3 V2 Autonomous Room Analysis Module
+    │       │   ├── __init__.py
+    │       │   ├── analyzer.py          # Master RoomAnalyzer orchestrator
+    │       │   ├── detector.py          # Multi-concept prompt candidate extractor
+    │       │   ├── mask_refiner.py      # Hierarchical subtraction, multi-wall plane splitting
+    │       │   ├── region_classifier.py # Spatial priors & multi-signal confidence scoring
+    │       │   ├── depth_estimator.py   # Perspective geometry & surface normal reasoning
+    │       │   └── cache.py             # SHA-256 in-memory LRU image cache
     │       ├── schemas/
     │       │   ├── __init__.py
-    │       │   └── requests.py          # Strict Pydantic models for API validation
+    │       │   ├── requests.py          # V1 Pydantic models for API validation
+    │       │   └── room.py              # V2 Pydantic models for Room Analysis
     │       └── api/
     │           ├── router.py            # Root API router aggregation
     │           └── v1/
     │               ├── endpoints_health.py        # GET /api/v1/health & POST /api/v1/device/switch
     │               ├── endpoints_image.py         # POST /api/v1/set-image & POST /api/v1/reset
     │               ├── endpoints_segment_text.py  # POST /api/v1/segment-text
-    │               └── endpoints_segment_point.py # POST /api/v1/segment-points
+    │               ├── endpoints_segment_point.py # POST /api/v1/segment-points
+    │               └── endpoints_room.py          # POST /api/v1/analyze-room (V2)
     │
     └── frontend/                        # Next.js 14 Modern Web UI
         ├── package.json                 # Node dependencies (Next.js, Tailwind, Lucide)
         ├── tailwind.config.js           # Theme extensions & responsive breakpoints
+        ├── public/samples/              # High-res sample images (living_room, bedroom, kitchen)
         └── src/
             ├── app/
             │   ├── layout.js            # Root HTML layout & fonts
             │   ├── globals.css          # Dark slate theme & glassmorphism utilities
-            │   └── page.js              # Full-width main workspace
+            │   ├── page.js              # V1 Full-width manual segmentation workspace
+            │   └── room-analysis/       # V2 Dedicated Route
+            │       └── page.js          # Autonomous Room Analysis single-screen workspace
             ├── components/
-            │   ├── common/
-            │   │   ├── Header.js        # Navbar with model status badge & device selector
-            │   │   ├── DeviceSelector.js# Interactive CUDA GPU vs CPU target switcher
-            │   │   └── Badge.js         # Status badge pill component
-            │   ├── canvas/
-            │   │   ├── InteractiveCanvas.js # Dual-pane input & output image view with point pins
-            │   │   └── CanvasControls.js    # Image meta, reset button & PNG mask export
-            │   ├── panels/
-            │   │   └── ControlPanel.js  # Text prompt tab & Interactive point prompt controls
-            │   └── metrics/
-            │       └── StatusLogger.js  # Latency, object counts & operation log stream
+            │   ├── common/              # Shared Components (Header, DeviceSelector, Badge)
+            │   │   ├── Header.js
+            │   │   ├── DeviceSelector.js
+            │   │   └── Badge.js
+            │   ├── v1_manual/           # V1 Manual Prompting Components
+            │   │   ├── canvas/          # InteractiveCanvas.js, CanvasControls.js
+            │   │   ├── panels/          # ControlPanel.js
+            │   │   └── metrics/         # StatusLogger.js
+            │   └── v2_room_analysis/    # V2 Autonomous Room Analysis Components
+            │       ├── RoomAnalysisWorkspace.js # 7/5 grid zero-scroll workspace
+            │       ├── RoomImageViewer.js       # Composite overlay viewer with opacity slider
+            │       ├── RegionList.js            # Interactive summary cards, filter tabs, batch toggles
+            │       ├── RegionItem.js            # High-contrast surface card with icons & micro bars
+            │       ├── AnalysisProgress.js      # Progressive pipeline status indicator
+            │       └── RoomUpload.js            # Dropzone with visual sample home photo cards
             ├── hooks/
             │   ├── useBackendHealth.js  # 5s polling hook for API availability & device status
-            │   └── useSamSession.js     # Session manager for image uploads, masks, points & undo
+            │   ├── useSamSession.js     # V1 Session manager for image uploads, masks, points & undo
+            │   └── useRoomAnalysis.js   # V2 State manager for room parsing & visible layers
             └── lib/
-                ├── api.js               # XMLHttpRequest client with real-time upload progress %
-                └── constants.js         # Click modes, suggested prompt tags & backend URLs
+                ├── constants.js         # API endpoints & theme defaults
+                └── api.js               # XMLHttpRequest client with real-time upload progress %
 ```
-
----
-
-## 3. Core Architecture & Data Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Frontend as Next.js UI (Port 3002)
-    participant API as FastAPI Backend (Port 8000)
-    participant SAM3 as SAM3Service (GPU/CPU)
-    participant Engine as MaskEngine
-
-    User->>Frontend: Select / Drop Image
-    Frontend->>API: POST /api/v1/set-image (Multipart Stream)
-    API->>SAM3: processor.set_image(PIL Image)
-    SAM3-->>API: Image ViT Feature Embeddings Cached
-    API-->>Frontend: { success: true, image_base64: "...", width, height }
-    Frontend-->>User: Render Input Canvas
-
-    alt Text Prompt Grounding
-        User->>Frontend: Enter Text "car" + Confidence (0.10)
-        Frontend->>API: POST /api/v1/segment-text
-        API->>SAM3: processor.set_text_prompt("car", state)
-        SAM3-->>API: { masks, boxes }
-        API->>Engine: MaskEngine.render_overlay(image, masks, boxes)
-        Engine-->>API: Composite Image Base64
-        API-->>Frontend: { success: true, num_objects, image_base64, execution_time_ms }
-        Frontend-->>User: Display Live Mask Overlay on Output Canvas
-    else Interactive Point Prompting
-        User->>Frontend: Click on Canvas (Left/Right Click -> Pos/Neg)
-        Frontend->>API: POST /api/v1/segment-points { points: [{x, y, label}] }
-        API->>SAM3: processor.add_point_prompt(points, labels, state)
-        SAM3-->>API: { masks, boxes }
-        API->>Engine: MaskEngine.render_overlay(...)
-        API-->>Frontend: { image_base64, num_objects, execution_time_ms }
-        Frontend-->>User: Update Mask Layer + Pin Pins
-    end
-```
-
----
-
-## 4. REST API Endpoint Reference
-
-| Method | Endpoint | Description | Request Payload | Response Schema |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/health` | Backend status, active device, and model load state | None | `HealthResponse` |
-| `POST` | `/api/v1/device/switch` | Dynamically reloads model on `"cuda"` or `"cpu"` | `{"device": "cuda"\|"cpu"}` | `DeviceSwitchResponse` |
-| `POST` | `/api/v1/set-image` | Uploads image and computes visual embeddings | `multipart/form-data (file)` | `{ success, image_base64, width, height }` |
-| `POST` | `/api/v1/segment-text` | Ground concepts by text prompt with confidence slider | `{"prompt": "person", "confidence": 0.10}` | `SegmentationResponse` |
-| `POST` | `/api/v1/segment-points` | Interactive positive/negative point segmentation | `{"points": [{"x": 0.5, "y": 0.5, "label": 1}]}` | `SegmentationResponse` |
-| `POST` | `/api/v1/reset` | Resets active image session cache in memory | None | `{"success": true}` |
-
----
-
-## 5. Development & Execution Instructions
-
-### Prerequisites
-- Python 3.11 with PyTorch 2.5+ & CUDA 12.1+ (or CPU fallback)
-- Node.js 18+ & npm
-- SAM 3 Checkpoint: Located at `sam3/checkpoints/sam3.pt`
-
-### 1-Click Launch (Windows)
-Double-click [`web_app/launch_all.bat`](file:///e:/AI/Segmentation_model_by_meta/web_app/launch_all.bat) or run from terminal:
-```cmd
-cd web_app
-launch_all.bat
-```
-
-### Manual Individual Commands
-
-#### Backend:
-```bash
-cd web_app/backend
-python run.py
-# Server running on http://127.0.0.1:8000
-# Interactive Swagger Docs on http://127.0.0.1:8000/api/v1/docs
-```
-
-#### Frontend:
-```bash
-cd web_app/frontend
-npm install
-npm run dev
-# App running on http://localhost:3000 (or auto-fallback 3001, 3002)
-```
-
----
-
-## 6. Guidelines for AI Assistants & LLMs
-
-1. **Namespace Isolation:** Never import `app` from the top level without ensuring `web_app/backend` is at `sys.path[0]` (because `sam3/app.py` has a naming clash with `backend/app`).
-2. **Coordinate Normalization:** Point prompts sent to the backend MUST be normalized in the range $[0.0, 1.0]$ (`x = px / width`, `y = py / height`).
-3. **Structured Logging:** Always use `app.core.logger` (`logger`, `model_logger`, `api_logger`) rather than raw `print()` statements.
-4. **Memory Management:** When switching devices or reloading models, call `torch.cuda.empty_cache()` and `gc.collect()`.
-5. **No Suppression of Warnings:** Fix the root causes of deprecations in code directly rather than suppressing with `warnings.filterwarnings`.

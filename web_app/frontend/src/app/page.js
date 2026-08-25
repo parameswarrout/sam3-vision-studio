@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useBackendHealth } from "@/hooks/useBackendHealth";
 import { useSamSession } from "@/hooks/useSamSession";
 import { Header } from "@/components/common/Header";
-import { InteractiveCanvas } from "@/components/canvas/InteractiveCanvas";
-import { CanvasControls } from "@/components/canvas/CanvasControls";
-import { ControlPanel } from "@/components/panels/ControlPanel";
-import { StatusLogger } from "@/components/metrics/StatusLogger";
+import { InteractiveCanvas } from "@/components/v1_manual/canvas/InteractiveCanvas";
+import { CanvasControls } from "@/components/v1_manual/canvas/CanvasControls";
+import { ControlPanel } from "@/components/v1_manual/panels/ControlPanel";
+import { StatusLogger } from "@/components/v1_manual/metrics/StatusLogger";
 import { apiClient } from "@/lib/api";
 
 export default function HomePage() {
@@ -64,6 +64,7 @@ export default function HomePage() {
         isOnline={isOnline}
         onSwitchDevice={handleSwitchDevice}
         isSwitchingDevice={isSwitchingDevice}
+        activeNav="manual"
       />
 
       {/* 2. Main Full-Width Workspace */}

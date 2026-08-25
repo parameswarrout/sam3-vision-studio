@@ -7,7 +7,7 @@
 ![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=for-the-badge&logo=next.js)
 ![PyTorch](https://img.shields.io/badge/Compute-NVIDIA%20CUDA%20%7C%20CPU-EE4C2C?style=for-the-badge&logo=pytorch)
 
-### High-performance, decoupled web studio and REST API for open-vocabulary grounding and interactive point-prompt segmentation powered by Meta SAM 3.
+### High-performance, decoupled web studio and REST API for open-vocabulary grounding, interactive point segmentation, and autonomous room surface analysis powered by Meta SAM 3.
 
 </div>
 
@@ -15,6 +15,7 @@
 
 ## 📖 Table of Contents
 - [✨ Key Features](#-key-features)
+- [🏛️ SAM 3 V2 — Automatic Room Analysis](#️-sam-3-v2--automatic-room-analysis)
 - [📁 Repository Structure](#-repository-structure)
 - [⚡ Quick Start (1-Click Launch)](#-quick-start-1-click-launch)
 - [🛠️ Manual Setup](#️-manual-setup)
@@ -26,11 +27,25 @@
 ## ✨ Key Features
 
 * 🚀 **Decoupled Architecture:** Clean separation of concerns between the **FastAPI Python Backend** (model inference, GPU tensor state) and the **Next.js 14 UI** (reactive canvas, interactive point pins).
+* 🏛️ **V2 Autonomous Room Analysis:** One-click interior room scene understanding. Automatically extracts multi-plane walls, floor, ceiling, windows, doors, and furniture with hierarchical opening carve-outs.
 * ⚡ **Hardware Acceleration & Dynamic Switching:** Auto-detects NVIDIA CUDA GPU with real-time UI toggle to switch between **CUDA GPU** and **CPU Mode** on the fly.
-* 🖼️ **Dual-Pane Full-Width Canvas:** Gradio-style split workspace (Input Image Left / Live Segmented Masks Right) utilizing 100% of your screen width.
+* 🖼️ **Dual-Pane Full-Width Canvas:** Gradio-style split workspace (Input Image Left / Live Segmented Masks Right) with zero vertical scroll overflow.
 * 🔍 **Open-Vocabulary Text Grounding:** Segment any arbitrary visual concept (`"person"`, `"sports car"`, `"sneakers"`) with a responsive confidence slider.
 * 🎯 **Interactive Positive & Negative Points:** Add positive points (`+` / Left Click) to include regions and negative points (`-` / Right Click) to exclude background items with real-time undo and clear.
 * 📊 **Production-Grade Structured Logging:** Standardized namespaced logging across all modules (`sam3.server`, `sam3.model`, `sam3.api`).
+
+---
+
+## 🏛️ SAM 3 V2 — Automatic Room Analysis
+
+The V2 module (`/room-analysis`) brings autonomous indoor architectural surface parsing:
+1. **Multi-Plane Walls:** Disambiguates complex indoor rooms into distinct wall facets (`wall_1`, `wall_2`, `wall_3` — Left, Center, Right Wall Planes).
+2. **Hierarchical Topological Carving:** Openings (Windows & Doors) are structurally carved out from wall masks; occluding Furniture is carved out from floors.
+3. **Multi-Signal Confidence Scoring:** Combines SAM logits, 3D spatial priors, shape solidity, and intersection penalties.
+4. **SHA-256 LRU Image Cache:** Instant cache retrieval on identical images without redundant GPU re-inference.
+5. **Interactive UI:** Real-time mask opacity slider, category filter chips (Walls, Floor, Openings, Furniture), and individual layer eye show/hide toggles.
+
+> For deep architectural details and mathematical formulations, see [**`V2_ROOM_ANALYSIS.md`**](./V2_ROOM_ANALYSIS.md).
 
 ---
 
@@ -38,6 +53,7 @@
 
 ```text
 ├── PROJECT_CONTEXT.md         # Master Architecture and LLM/IDE Reference Guide
+├── V2_ROOM_ANALYSIS.md        # Dedicated SAM 3 V2 Room Analysis Specification
 ├── .cursorrules               # AI IDE instructions for Cursor, Windsurf, Copilot
 ├── download_sam3.py           # Checkpoint downloader from Hugging Face
 │
@@ -51,12 +67,14 @@
     │   ├── run.py             # Server runner with path resolution
     │   └── app/
     │       ├── core/          # sam3_service.py, mask_engine.py, logger.py
-    │       ├── schemas/       # Strict Pydantic request/response schemas
-    │       └── api/v1/        # Modular REST API endpoints
+    │       ├── room_analysis/ # analyzer, detector, mask_refiner, classifier, cache
+    │       ├── schemas/       # Strict Pydantic schemas (requests.py, room.py)
+    │       └── api/v1/        # REST endpoints (health, image, text, points, room)
     └── frontend/              # Next.js 14 Web Studio (Port 3000/3001/3002)
         └── src/
-            ├── components/    # Canvas, Header, ControlPanel, DeviceSelector
-            ├── hooks/         # useSamSession.js, useBackendHealth.js
+            ├── app/           # page.js (V1 Manual), room-analysis/page.js (V2)
+            ├── components/    # canvas/, common/, room-analysis/
+            ├── hooks/         # useSamSession.js, useRoomAnalysis.js, useBackendHealth.js
             └── lib/           # api.js (XMLHttpRequest progress client)
 ```
 
@@ -72,7 +90,8 @@ launch_all.bat
 ```
 
 Once launched:
-* **Web UI:** [`http://localhost:3000`](http://localhost:3000) (or `http://localhost:3002` if port is in use)
+* **Manual Segmentation (V1):** [`http://localhost:3000`](http://localhost:3000) (or `http://localhost:3001` / `http://localhost:3002`)
+* **Room Analysis (V2):** [`http://localhost:3000/room-analysis`](http://localhost:3000/room-analysis)
 * **Interactive API Docs:** [`http://127.0.0.1:8000/api/v1/docs`](http://127.0.0.1:8000/api/v1/docs)
 
 ---
@@ -101,6 +120,7 @@ npm run dev
 | :--- | :--- | :--- |
 | `/api/v1/health` | `GET` | Server health, active compute device, and model readiness |
 | `/api/v1/device/switch` | `POST` | Dynamically re-allocate weights to `"cuda"` or `"cpu"` |
+| `/api/v1/analyze-room` | `POST` | **V2 Autonomous Room Analysis** (Walls, Floor, Openings, Furniture) |
 | `/api/v1/set-image` | `POST` | Upload target image and compute ViT feature embeddings |
 | `/api/v1/segment-text` | `POST` | Open-vocabulary text prompt grounding |
 | `/api/v1/segment-points`| `POST` | Interactive coordinate point segmentation |
@@ -110,4 +130,5 @@ npm run dev
 
 ## 🧠 LLM & IDE Context Documentation
 
-For detailed internal workflows, class diagrams, tensor lifecycles, and architectural patterns, see [**`PROJECT_CONTEXT.md`**](./PROJECT_CONTEXT.md).
+* [**`PROJECT_CONTEXT.md`**](./PROJECT_CONTEXT.md) — Master LLM context, architectural diagrams, state management, and file index.
+* [**`V2_ROOM_ANALYSIS.md`**](./V2_ROOM_ANALYSIS.md) — Complete specification for SAM 3 V2 Automatic Room Analysis.

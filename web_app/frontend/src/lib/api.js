@@ -1,7 +1,8 @@
 import { API_BASE_URL } from "./constants";
 
 /**
- * Modular API client for SAM 3 Backend with Upload Progress & Device Switch Support
+ * Modular API client for SAM 3 Backend
+ * Supports Manual Prompting (V1) & Automatic Room Analysis (V2)
  */
 export const apiClient = {
   /**
@@ -43,7 +44,7 @@ export const apiClient = {
   },
 
   /**
-   * Upload Image and Compute Features with real progress callback
+   * Upload Image and Compute Features with real progress callback (V1)
    */
   setImage(file, onProgress) {
     return new Promise((resolve, reject) => {
@@ -91,7 +92,7 @@ export const apiClient = {
   },
 
   /**
-   * Segment using Text Prompt
+   * Segment using Text Prompt (V1)
    */
   async segmentText(prompt, confidence = 0.10) {
     const res = await fetch(`${API_BASE_URL}/segment-text`, {
@@ -109,7 +110,7 @@ export const apiClient = {
   },
 
   /**
-   * Segment using Interactive Points
+   * Segment using Interactive Points (V1)
    */
   async segmentPoints(points) {
     const res = await fetch(`${API_BASE_URL}/segment-points`, {
@@ -124,6 +125,54 @@ export const apiClient = {
     }
 
     return await res.json();
+  },
+
+  /**
+   * Automatic Room Analysis (V2)
+   */
+  analyzeRoom(file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append("file", file);
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 40);
+            onProgress(percentComplete, "Uploading room photo...");
+          }
+        };
+      }
+
+      xhr.open("POST", `${API_BASE_URL}/analyze-room`);
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            if (onProgress) onProgress(100, "Analysis complete!");
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } catch (e) {
+            reject(new Error("Invalid server response format"));
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.detail || `Room analysis failed (${xhr.status})`));
+          } catch {
+            reject(new Error(`Room analysis failed with status ${xhr.status}`));
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error("Network error connecting to backend API. Is the server running?"));
+      };
+
+      if (onProgress) onProgress(5, "Sending image payload...");
+      xhr.send(formData);
+    });
   },
 
   /**
