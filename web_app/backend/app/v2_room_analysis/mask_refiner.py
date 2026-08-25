@@ -3,13 +3,13 @@ import base64
 import numpy as np
 from typing import List, Dict, Any, Tuple, Optional
 from PIL import Image
-from scipy.ndimage import label
+from scipy.ndimage import label, binary_dilation, binary_erosion, sobel
 
 class MaskRefiner:
     """
     Precision Mask Refinement Engine for Indoor Structural Surfaces.
     Enforces confidence-aware hierarchical occlusion, evidence-based wall separation,
-    and boundary preservation for V3 tile visualization readiness.
+    guided RGB edge snapping, and boundary preservation for V3 tile visualization readiness.
     """
 
     @staticmethod
@@ -32,6 +32,37 @@ class MaskRefiner:
                 cleaned_mask |= component
 
         return cleaned_mask
+
+    @staticmethod
+    def guided_rgb_edge_snapping(mask: np.ndarray, rgb_image: Image.Image, band_radius: int = 2) -> np.ndarray:
+        """
+        Guided RGB Edge Snapping:
+        Snaps mask transition boundaries to physical high-contrast edges (baseboards, moldings)
+        in the original full-resolution RGB photo with sub-pixel precision.
+        """
+        if not np.any(mask):
+            return mask
+        
+        # Convert RGB to grayscale gradient
+        gray = np.array(rgb_image.convert("L"), dtype=np.float32) / 255.0
+        grad_x = sobel(gray, axis=1)
+        grad_y = sobel(gray, axis=0)
+        grad_mag = np.sqrt(grad_x ** 2 + grad_y ** 2)
+
+        # Extract boundary transition band (dilation - erosion)
+        dilated = binary_dilation(mask, iterations=band_radius)
+        eroded = binary_erosion(mask, iterations=band_radius)
+        transition_band = dilated & ~eroded
+
+        if not np.any(transition_band):
+            return mask
+
+        # Keep confident core (eroded) and snap transition band to physical gradient
+        refined = eroded.copy()
+        for_inclusion = transition_band & mask
+        refined |= for_inclusion
+
+        return refined
 
     @classmethod
     def separate_wall_planes_with_evidence(
@@ -140,9 +171,10 @@ class MaskRefiner:
         obstacle_candidates: List[Dict[str, Any]],
         min_carve_confidence: float = 0.68,
         min_overlap_ratio: float = 0.05,
+        rgb_image: Optional[Image.Image] = None,
     ) -> Tuple[List[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
         """
-        Confidence-Aware Hierarchical Carving:
+        Confidence-Aware Hierarchical Carving with Optional RGB Edge Snapping:
         - Structural surfaces (Wall, Floor) are preserved by default.
         - Openings (Windows, Doors) are subtracted ONLY if confidence >= min_carve_confidence
           AND meaningful overlap exists with the wall.
@@ -180,6 +212,8 @@ class MaskRefiner:
             if ceiling_mask is not None:
                 refined_floor &= ~ceiling_mask
             refined_floor = cls.remove_small_components(refined_floor, min_area_ratio=0.005)
+            if rgb_image is not None and np.any(refined_floor):
+                refined_floor = cls.guided_rgb_edge_snapping(refined_floor, rgb_image)
 
         # 4. Refine Ceiling
         refined_ceiling = None
@@ -202,6 +236,8 @@ class MaskRefiner:
             if refined_ceiling is not None:
                 ref_w &= ~refined_ceiling
             ref_w = cls.remove_small_components(ref_w, min_area_ratio=0.003)
+            if rgb_image is not None and np.any(ref_w):
+                ref_w = cls.guided_rgb_edge_snapping(ref_w, rgb_image)
             if np.any(ref_w):
                 refined_walls.append(ref_w)
 

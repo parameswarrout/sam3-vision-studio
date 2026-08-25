@@ -91,6 +91,7 @@ class RoomAnalyzer:
             opening_candidates=opening_candidates,
             obstacle_candidates=obstacle_candidates,
             min_carve_confidence=0.68,
+            rgb_image=image,
         )
         timings["mask_refinement_ms"] = round((time.time() - t0) * 1000, 1)
 
