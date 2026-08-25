@@ -86,8 +86,8 @@ export default function RoomAnalysisPage() {
         activeNav="room-analysis"
       />
 
-      {/* 2. Main Full-Width Single-Screen Workspace (No page scrolling required) */}
-      <main className="flex-1 w-full px-3 sm:px-5 lg:px-6 py-3 min-h-0 overflow-hidden flex flex-col">
+      {/* 2. Main Full-Width Single-Screen Workspace (Edge-to-Edge) */}
+      <main className="flex-1 w-full px-2 sm:px-4 py-2 min-h-0 overflow-hidden flex flex-col">
         <RoomAnalysisWorkspace
           previewUrl={previewUrl}
           imageMeta={imageMeta}
