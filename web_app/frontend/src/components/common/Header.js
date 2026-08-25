@@ -220,32 +220,57 @@ export function Header({
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700/80 text-white transition-all shadow-sm"
+                className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-white transition-all shadow-md active:scale-95 group"
                 title="User profile & auth settings"
               >
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-white text-[11px] font-black shadow-inner">
-                  {user.full_name ? user.full_name[0].toUpperCase() : "U"}
+                {/* Photo Avatar with Online Badge */}
+                <div className="relative">
+                  {user.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name}
+                      className="w-7 h-7 rounded-full object-cover border border-indigo-400 shadow-sm group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-white text-[11px] font-black shadow-inner">
+                      {user.full_name ? user.full_name[0].toUpperCase() : "U"}
+                    </div>
+                  )}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-950" />
                 </div>
+
                 <div className="hidden sm:flex flex-col items-start text-left">
-                  <span className="text-[11px] font-extrabold truncate max-w-[100px]">
-                    {user.full_name || "Architect"}
+                  <span className="text-[12px] font-black tracking-tight text-white group-hover:text-indigo-300 transition-colors">
+                    {user.full_name || "PA"}
                   </span>
-                  <span className="text-[9px] font-mono text-indigo-400 font-bold uppercase">
+                  <span className="text-[9px] font-mono text-indigo-400 font-extrabold uppercase -mt-0.5">
                     {user.role}
                   </span>
                 </div>
-                <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors hidden sm:block" />
               </button>
 
               {/* Dropdown Menu */}
               {isUserMenuOpen && (
                 <div
                   onMouseLeave={() => setIsUserMenuOpen(false)}
-                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-slate-900/95 border border-slate-700/90 shadow-2xl shadow-black/80 backdrop-blur-2xl p-2 z-[60] flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150"
+                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-slate-900/95 border border-slate-700/90 shadow-2xl shadow-black/80 backdrop-blur-2xl p-2.5 z-[60] flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-150"
                 >
-                  <div className="p-2 border-b border-slate-800 text-xs">
-                    <p className="font-bold text-white truncate">{user.full_name}</p>
-                    <p className="text-[10px] text-slate-400 font-mono truncate">{user.email || "Local Development Mode"}</p>
+                  <div className="p-2 border-b border-slate-800 flex items-center gap-3">
+                    {user.avatar_url && (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.full_name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 shadow-md shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-extrabold text-sm text-white truncate">{user.full_name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono truncate">{user.email || "pa (Local Admin)"}</p>
+                      <span className="inline-block text-[9px] font-mono font-bold uppercase text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.2 rounded mt-0.5">
+                        {user.role} Active
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-0.5">
