@@ -22,9 +22,10 @@ flowchart TD
     C -->|Cache Hit| D[Instant Response < 2ms]
     C -->|Cache Miss| E[RoomDetector]
 
-    subgraph S1 [1. Candidate Extraction]
+    subgraph S1 [1. Multi-Prompt Candidate Extraction]
         E --> E1[ViT Image Embed Once]
-        E1 --> E2[Query Candidates: Wall, Floor, Openings, Furniture, Ceiling]
+        E1 --> E2[Ensemble Prompts: Wall, Floor, Openings, Furniture, Ceiling]
+        E2 --> E3[IoU Non-Maximum Merging]
     end
 
     subgraph S2 [2. Depth & Geometry Layer]
@@ -36,10 +37,10 @@ flowchart TD
     end
 
     subgraph S3 [3. Confidence-Aware Refinement]
-        E2 & G --> H[MaskRefiner]
+        E3 & G --> H[MaskRefiner]
         H --> H1[Evidence-Based Wall Separation: 1 to N planes]
         H --> H2[Confidence-Aware Hierarchical Carving: Threshold >= 0.68]
-        H --> H3[Contour & Boundary Preservation]
+        H --> H3[Guided RGB Edge Snapping: Baseboards & Moldings]
     end
 
     subgraph S4 [4. Multi-Signal Scoring & Uncertainty]
@@ -55,7 +56,7 @@ flowchart TD
 
 ---
 
-## 3. Core Algorithms & Mathematical Formulations
+## 3. Core Algorithms & Accuracy Formulations
 
 ### A. Relative Depth & 3D Surface Normals (`DepthEstimator` & `GeometryAnalyzer`)
 The 2D image is converted into a normalized relative depth map $D(x, y) \in [0.0, 1.0]$. 3D surface normal unit vectors are computed from Sobel spatial gradients:
@@ -68,7 +69,27 @@ $$N = \frac{\left(-\frac{\partial D}{\partial x}, -\frac{\partial D}{\partial y}
 
 ---
 
-### B. Evidence-Based Multi-Wall Disambiguation
+### B. Multi-Prompt Architectural Concept Ensembling (`RoomDetector`)
+Instead of querying single isolated words, SAM 3 evaluates an ensemble of architectural synonyms per concept:
+* **Walls:** `["wall", "interior wall", "painted wall", "accent wall"]`
+* **Floors:** `["floor", "hardwood floor", "tile floor", "carpet"]`
+* **Openings:** `["window", "glass window", "sliding glass door", "door", "doorway", "interior door"]`
+* **Furniture:** `["furniture", "sofa", "couch", "bed", "table", "chair", "cabinet"]`
+
+Overlapping candidate masks are merged using **IoU Non-Maximum Merging** ($\text{IoU} \ge 0.65$), maximizing surface recall for textured and accent walls.
+
+---
+
+### C. Guided RGB Edge Snapping (`MaskRefiner`)
+Extracts a narrow boundary transition band ($\pm 2$ pixels) and aligns the neural mask contour with physical high-contrast **wooden baseboard seams, crown moldings, and window trims** using local RGB gradients:
+
+$$\text{TransitionBand} = \text{Dilation}(M) \setminus \text{Erosion}(M)$$
+
+Snapping along the transition band produces razor-sharp architectural boundaries with sub-pixel precision.
+
+---
+
+### D. Evidence-Based Multi-Wall Disambiguation
 Walls are **never** artificially forced into fixed 3-part slices. Instead, walls are separated **only when genuine physical evidence exists**:
 1. Natural disconnected components ($\text{Area} \ge 3\%$ of image), OR
 2. Strong vertical corner seam valleys detected via horizontal gradient profiles:
@@ -80,7 +101,7 @@ $$\text{Profile}(x) = \frac{1}{H} \sum_{y=0.15H}^{0.75H} \left( 0.5 \cdot |\nabl
 
 ---
 
-### C. Confidence-Aware Hierarchical Occlusion
+### E. Confidence-Aware Hierarchical Occlusion
 Structural surfaces (Wall, Floor) are protected against low-confidence false positives. Openings and furniture are subtracted **only if**:
 
 $$\text{Confidence}_{\text{object}} \ge 0.68 \quad \text{AND} \quad \frac{\text{Area}(\text{Object} \cap \text{Surface})}{\text{Area}(\text{Object})} \ge 5\%$$
@@ -92,7 +113,7 @@ $$\text{Floor}_{\text{refined}} = \text{Floor}_{\text{raw}} \setminus \left(\tex
 
 ---
 
-### D. Multi-Signal Confidence & Uncertainty Scoring
+### F. Multi-Signal Confidence & Uncertainty Scoring
 Instead of a static heuristic, confidence is calculated from independent signals:
 
 $$\text{Confidence} = \text{clip}\Big(0.40 \cdot S_{\text{SAM}} + 0.25 \cdot S_{\text{Spatial}} + 0.20 \cdot S_{\text{Geometry}} + 0.15 \cdot S_{\text{Boundary}} - P_{\text{Overlap}}, 0.05, 0.98\Big)$$
@@ -106,99 +127,29 @@ $$\text{Confidence} = \text{clip}\Big(0.40 \cdot S_{\text{SAM}} + 0.25 \cdot S_{
 #### Uncertainty Flagging:
 If $\text{Confidence} < 0.72$ or $S_{\text{Boundary}} < 0.60$ or $S_{\text{Geometry}} < 0.60$:
 $$\mathbf{\text{needs\_review} = \text{True}}$$
-The UI immediately renders an amber warning pill (`⚠️ Review Needed`) so users and downstream modules are explicitly notified.
+The UI immediately renders an amber warning pill (`⚠️ Review`) so users are explicitly notified.
 
 ---
 
-## 4. Backend Package Structure (`app/v2_room_analysis/`)
+## 4. Frontend Interactive Capabilities (`/room-analysis`)
 
-```text
-web_app/backend/app/v2_room_analysis/
-├── __init__.py               # Exports all V2 analyzers and utilities
-├── analyzer.py               # Master RoomAnalyzer orchestrator (end-to-end pipeline)
-├── detector.py               # Multi-concept candidate extractor (queries SAM 3 ViT backbone)
-├── depth_estimator.py        # Relative depth estimation with on/off switch (depth_enabled)
-├── geometry_analyzer.py      # 3D surface normal estimation, plane orientation, seam detection
-├── mask_refiner.py           # Evidence-based wall separation & confidence-aware carving
-├── region_classifier.py      # Multi-signal scoring, quality breakdown, & uncertainty detection
-└── cache.py                  # SHA-256 in-memory image LRU cache
-```
+* **Interactive Zoom & Pan ($100\% \to 400\%$):** Smooth mouse wheel zoom and click-and-drag panning.
+* **"Before / After" Split Compare Slider (`↔`):** Draggable vertical divider comparing the raw photo against the segmented mask overlays.
+* **One-Click Mask Download (`📥`):** Export full-resolution transparent PNG mask overlays.
+* **Fullscreen Inspection Mode (`⛶`):** Dedicated full-viewport examination.
+* **Category Eye & Solo Toggles:** 1-click batch visibility and isolation buttons for Walls, Floor, Openings, and Furniture.
+* **Keyboard Shortcuts:**
+  * `Spacebar`: Toggle show/hide all masks.
+  * `1`–`5`: Switch active surface category solo.
+  * `Escape`: Reset view / clear hover.
 
 ---
 
-## 5. API Specification (`POST /api/v1/analyze-room`)
+## 5. Backend Stability & Performance
 
-* **Endpoint:** `POST /api/v1/analyze-room`
-* **Content-Type:** `multipart/form-data`
-* **Body:** `file: UploadFile` (JPEG, PNG, WebP)
-
-### Sample Response:
-```json
-{
-  "success": true,
-  "message": "Room parsing complete: 2 wall plane(s), 1 floor, 1 window(s), 0 door(s), 2 furniture object(s). (0 uncertain).",
-  "width": 1280,
-  "height": 720,
-  "execution_time_ms": 320.5,
-  "metadata": {
-    "image_hash": "d92f393a6036...",
-    "width": 1280,
-    "height": 720,
-    "device": "cuda",
-    "wall_count": 2,
-    "floor_count": 1,
-    "window_count": 1,
-    "door_count": 0,
-    "furniture_count": 2,
-    "ceiling_count": 0,
-    "cached": false,
-    "depth_enabled": true,
-    "needs_review_count": 0,
-    "pipeline_stages": {
-      "depth_and_geometry_ms": 18.2,
-      "candidate_extraction_ms": 265.1,
-      "mask_refinement_ms": 21.4,
-      "region_building_ms": 15.8
-    }
-  },
-  "regions": [
-    {
-      "id": "wall_1",
-      "type": "wall",
-      "label": "Wall Plane 1",
-      "confidence": 0.94,
-      "needs_review": false,
-      "area_ratio": 0.32,
-      "bbox": [0, 45, 480, 680],
-      "color": "#3b82f6",
-      "mask_base64": "data:image/png;base64,iVBORw0KGgo...",
-      "depth_hint": "vertical_plane",
-      "quality": {
-        "semantic": 0.95,
-        "geometry": 0.92,
-        "boundary": 0.94
-      }
-    },
-    {
-      "id": "floor_1",
-      "type": "floor",
-      "label": "Floor Surface",
-      "confidence": 0.96,
-      "needs_review": false,
-      "area_ratio": 0.28,
-      "bbox": [0, 420, 1280, 720],
-      "color": "#10b981",
-      "mask_base64": "data:image/png;base64,iVBORw0KGgo...",
-      "depth_hint": "ground_plane",
-      "quality": {
-        "semantic": 0.96,
-        "geometry": 0.95,
-        "boundary": 0.97
-      }
-    }
-  ]
-}
-```
+* **Mobile EXIF Auto-Orientation (`ImageOps.exif_transpose`):** Normalizes iPhone/Android portrait orientation metadata prior to inference.
+* **Non-Blocking Threadpool (`asyncio.to_thread`):** Executes GPU/CPU inference in worker threads without blocking FastAPI health checks.
+* **Automatic VRAM Scrubbing (`torch.cuda.empty_cache`):** Frees PyTorch scratch tensors after each session to prevent memory leaks.
 
 ---
 
