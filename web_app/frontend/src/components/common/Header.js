@@ -1,9 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Layers, Loader2, CheckCircle2, Wand2, Home, Sparkles, Cpu, History } from "lucide-react";
+import {
+  Layers,
+  Loader2,
+  CheckCircle2,
+  Wand2,
+  Home,
+  Sparkles,
+  Cpu,
+  History,
+  User,
+  LogOut,
+  LogIn,
+  Shield,
+  ChevronDown,
+} from "lucide-react";
 import { Badge } from "./Badge";
 import { DeviceSelector } from "./DeviceSelector";
+import { AuthModal } from "./AuthModal";
+import { useAuth } from "@/hooks/useAuth";
 
 // Futuristic AI Vision Transformer & Neural Segmentation Matrix Logo
 function VisionTransformerLogo({ className = "w-6 h-6" }) {
@@ -67,6 +84,9 @@ export function Header({
   onOpenHistory,
 }) {
   const isModelLoaded = Boolean(health?.model_loaded);
+  const { user, isAuthenticated, login, register, logout, switchDemoRole } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
     <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur-2xl sticky top-0 z-50 shadow-md">
@@ -140,14 +160,14 @@ export function Header({
           </Link>
         </nav>
 
-        {/* Right: Server / Compute Device Controls & History Button */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right: History, Device, Model Status & User Profile */}
+        <div className="flex items-center gap-2.5 shrink-0">
           {/* History Button (Opens SQLite Saved Rooms Drawer) */}
           {activeNav === "room-analysis" && onOpenHistory && (
             <button
               type="button"
               onClick={onOpenHistory}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm active:scale-95"
               title="Open Saved Room Analyses History"
             >
               <History className="w-3.5 h-3.5 text-indigo-400" />
@@ -163,7 +183,7 @@ export function Header({
           />
 
           {/* Model Status Pill */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             {isOnline ? (
               isModelLoaded ? (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
@@ -183,8 +203,113 @@ export function Header({
               </div>
             )}
           </div>
+
+          {/* User Profile & Auth Trigger */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsUserMenuOpen((prev) => !prev)}
+              className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700/80 text-white transition-all shadow-sm"
+              title="User profile & auth settings"
+            >
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-white text-[11px] font-black shadow-inner">
+                {user.full_name ? user.full_name[0].toUpperCase() : "U"}
+              </div>
+              <div className="hidden sm:flex flex-col items-start text-left">
+                <span className="text-[11px] font-extrabold truncate max-w-[100px]">
+                  {user.full_name || "Architect"}
+                </span>
+                <span className="text-[9px] font-mono text-indigo-400 font-bold uppercase">
+                  {user.role}
+                </span>
+              </div>
+              <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div
+                onMouseLeave={() => setIsUserMenuOpen(false)}
+                className="absolute right-0 top-12 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 flex flex-col gap-1.5 animate-in fade-in duration-150"
+              >
+                <div className="p-2 border-b border-slate-800 text-xs">
+                  <p className="font-bold text-white truncate">{user.full_name}</p>
+                  <p className="text-[10px] text-slate-400 font-mono truncate">{user.email || "Local Development Mode"}</p>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-mono font-bold text-slate-500 px-2">
+                    Quick Role Switch:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchDemoRole("admin");
+                      setIsUserMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between ${
+                      user.role === "admin" ? "bg-indigo-600/30 text-indigo-200" : "text-slate-300 hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>Lead Architect (Admin)</span>
+                    {user.role === "admin" && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchDemoRole("client");
+                      setIsUserMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between ${
+                      user.role === "client" ? "bg-indigo-600/30 text-indigo-200" : "text-slate-300 hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>Client (View-Only)</span>
+                    {user.role === "client" && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                  </button>
+                </div>
+
+                <div className="pt-1 border-t border-slate-800">
+                  {isAuthenticated ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-950/40 flex items-center gap-2 transition-all"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Log Out</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAuthModalOpen(true);
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold text-indigo-300 hover:bg-indigo-950/40 flex items-center gap-2 transition-all"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>Sign In / Register</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLogin={login}
+        onRegister={register}
+      />
     </header>
   );
 }

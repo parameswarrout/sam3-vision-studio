@@ -209,6 +209,51 @@ export const apiClient = {
   },
 
   /**
+   * User Registration
+   */
+  async register(email, password, full_name, role = "architect") {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, full_name, role }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Registration failed");
+    }
+    return await res.json();
+  },
+
+  /**
+   * User Login
+   */
+  async login(email, password) {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Invalid credentials");
+    }
+    return await res.json();
+  },
+
+  /**
+   * Get Active Profile
+   */
+  async getMe(token) {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch profile");
+    return await res.json();
+  },
+
+  /**
    * Reset Backend Session
    */
   async resetSession() {

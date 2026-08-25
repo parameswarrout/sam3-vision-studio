@@ -24,9 +24,10 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    email = Column(String(255), unique=True, nullable=True)
+    email = Column(String(255), unique=True, index=True, nullable=True)
+    hashed_password = Column(String(255), nullable=True)
     full_name = Column(String(120), default="Local Architect")
-    role = Column(String(30), default="architect")
+    role = Column(String(30), default="architect") # 'admin', 'architect', 'client'
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
