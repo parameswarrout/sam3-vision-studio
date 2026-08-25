@@ -28,6 +28,7 @@ class AdminUserItem(BaseModel):
     email: Optional[str] = None
     full_name: str
     role: str
+    avatar_url: Optional[str] = None
     is_active: bool
     last_login_at: Optional[datetime] = None
     created_at: datetime
@@ -37,12 +38,14 @@ class CreateUserAdminRequest(BaseModel):
     password: str
     full_name: str = "Studio Member"
     role: str = "architect" # 'admin', 'architect', 'client'
+    avatar_url: Optional[str] = None
     is_active: bool = True
 
 class UpdateUserAdminRequest(BaseModel):
     email: Optional[str] = None
     full_name: Optional[str] = None
     role: Optional[str] = None
+    avatar_url: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None # Optional password reset
 
@@ -91,7 +94,7 @@ async def get_all_studio_users(
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_role(["admin"])),
 ):
-    """Lists all studio users with login timestamps and role details."""
+    """Lists all studio users with login timestamps, avatars, and role details."""
     users = await UserRepository.list_users(db)
     return [
         {
@@ -99,6 +102,7 @@ async def get_all_studio_users(
             "email": u.email,
             "full_name": u.full_name,
             "role": u.role,
+            "avatar_url": u.avatar_url or ("/avatar_pa_thumb.jpg" if u.email == "pa" else None),
             "is_active": u.is_active,
             "last_login_at": u.last_login_at,
             "created_at": u.created_at,

@@ -326,23 +326,27 @@ export default function AdminDashboardPage() {
                       <tr key={u.id} className="hover:bg-slate-850/60 transition-colors">
                         {/* Name & Avatar */}
                         <td className="px-4 py-3 font-bold text-white">
-                          <div className="flex items-center gap-2.5">
-                            {isPrimaryAdmin ? (
+                          <div className="flex items-center gap-3">
+                            {u.avatar_url || isPrimaryAdmin ? (
                               <img
-                                src="/avatar_pa_thumb.jpg"
-                                alt="PA"
-                                className="w-8 h-8 rounded-full object-cover border-2 border-indigo-400 shadow-sm"
+                                src={u.avatar_url || "/avatar_pa_thumb.jpg"}
+                                alt={u.full_name}
+                                className="w-9 h-9 rounded-full object-cover border-2 border-indigo-400/90 shadow-md shrink-0"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-black text-indigo-400">
+                              <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-black text-indigo-400 shrink-0">
                                 {u.full_name[0]?.toUpperCase() || "U"}
                               </div>
                             )}
-                            <div>
-                              <p className="font-black text-xs text-white">{u.full_name}</p>
-                              {isPrimaryAdmin && (
-                                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase">
+                            <div className="min-w-0">
+                              <p className="font-black text-sm text-white truncate">{u.full_name}</p>
+                              {isPrimaryAdmin ? (
+                                <span className="inline-block text-[9px] font-mono text-emerald-400 font-bold uppercase bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.2 rounded mt-0.5">
                                   Primary Admin
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-mono text-slate-400 capitalize">
+                                  {u.role}
                                 </span>
                               )}
                             </div>

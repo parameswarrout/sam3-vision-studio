@@ -28,6 +28,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=True)
     full_name = Column(String(120), default="Local Architect")
     role = Column(String(30), default="architect") # 'admin', 'architect', 'client'
+    avatar_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
