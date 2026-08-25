@@ -66,6 +66,14 @@ async def get_admin_dashboard_stats(
     }
     return stats
 
+@router.get("/database-info")
+async def get_database_telemetry_info(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_role(["admin"])),
+):
+    """Returns detailed low-level SQLite database telemetry, WAL flags, table metrics, and storage breakdown."""
+    return await UserRepository.get_detailed_database_info(db)
+
 @router.get("/logins", response_model=List[LoginAuditItem])
 async def get_login_audit_trail(
     limit: int = 50,

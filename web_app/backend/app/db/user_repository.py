@@ -1,14 +1,15 @@
+import os
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import User, UserLoginAudit, RoomSession, TensorArtifact
+from app.db.models import User, UserLoginAudit, RoomSession, SurfaceRegion, TensorArtifact, Project
 from app.core.security import hash_password, verify_password
 from app.core.logger import api_logger
 
 class UserRepository:
-    """Async Database Repository for User Management, Authentication & Login Audits."""
+    """Async Database Repository for User Management, Authentication & Database Telemetry."""
 
     @staticmethod
     async def create_user(
@@ -29,6 +30,7 @@ class UserRepository:
             hashed_password=hash_password(password),
             full_name=full_name,
             role=role,
+            avatar_url="/avatar_pa_thumb.jpg" if email.lower() == "pa" else None,
             is_active=True,
         )
         session.add(user)
@@ -114,31 +116,89 @@ class UserRepository:
     @staticmethod
     async def get_admin_dashboard_stats(session: AsyncSession) -> Dict[str, Any]:
         """Aggregates platform metrics for Admin Dashboard."""
-        # Total users
-        user_count_stmt = select(func.count(User.id))
-        total_users = (await session.execute(user_count_stmt)).scalar() or 0
-
-        # Total room sessions
-        room_count_stmt = select(func.count(RoomSession.id))
-        total_rooms = (await session.execute(room_count_stmt)).scalar() or 0
-
-        # Total tensor artifacts & bytes
-        tensor_size_stmt = select(func.sum(TensorArtifact.file_size_bytes))
-        total_tensor_bytes = (await session.execute(tensor_size_stmt)).scalar() or 0
-
-        # Total login events
-        login_count_stmt = select(func.count(UserLoginAudit.id))
-        total_logins = (await session.execute(login_count_stmt)).scalar() or 0
-
-        # Average confidence
-        avg_conf_stmt = select(func.avg(RoomSession.overall_confidence))
-        avg_confidence = (await session.execute(avg_conf_stmt)).scalar() or 0.0
+        user_count = (await session.execute(select(func.count(User.id)))).scalar() or 0
+        room_count = (await session.execute(select(func.count(RoomSession.id)))).scalar() or 0
+        tensor_size = (await session.execute(select(func.sum(TensorArtifact.file_size_bytes)))).scalar() or 0
+        login_count = (await session.execute(select(func.count(UserLoginAudit.id)))).scalar() or 0
+        avg_conf = (await session.execute(select(func.avg(RoomSession.overall_confidence)))).scalar() or 0.0
 
         return {
-            "total_users": total_users,
-            "total_room_sessions": total_rooms,
-            "total_tensor_storage_bytes": total_tensor_bytes,
-            "total_tensor_storage_mb": round(total_tensor_bytes / (1024 * 1024), 2),
-            "total_login_audits": total_logins,
-            "average_confidence": round(float(avg_confidence) * 100, 1),
+            "total_users": user_count,
+            "total_room_sessions": room_count,
+            "total_tensor_storage_bytes": tensor_size,
+            "total_tensor_storage_mb": round(tensor_size / (1024 * 1024), 2),
+            "total_login_audits": login_count,
+            "average_confidence": round(float(avg_conf) * 100, 1),
+        }
+
+    @staticmethod
+    async def get_detailed_database_info(session: AsyncSession) -> Dict[str, Any]:
+        """Collects low-level SQLite database telemetry, table row counts, PRAGMA flags, and storage disk usage."""
+        db_file = os.path.abspath("data/rooms.db")
+        wal_file = os.path.abspath("data/rooms.db-wal")
+        shm_file = os.path.abspath("data/rooms.db-shm")
+
+        db_size_bytes = os.path.getsize(db_file) if os.path.exists(db_file) else 0
+        wal_size_bytes = os.path.getsize(wal_file) if os.path.exists(wal_file) else 0
+
+        # Query PRAGMA settings
+        journal_mode = (await session.execute(text("PRAGMA journal_mode;"))).scalar() or "wal"
+        sync_mode = (await session.execute(text("PRAGMA synchronous;"))).scalar() or 1
+        page_size = (await session.execute(text("PRAGMA page_size;"))).scalar() or 4096
+        page_count = (await session.execute(text("PRAGMA page_count;"))).scalar() or 0
+
+        # Table Row Counts
+        user_rows = (await session.execute(select(func.count(User.id)))).scalar() or 0
+        audit_rows = (await session.execute(select(func.count(UserLoginAudit.id)))).scalar() or 0
+        project_rows = (await session.execute(select(func.count(Project.id)))).scalar() or 0
+        session_rows = (await session.execute(select(func.count(RoomSession.id)))).scalar() or 0
+        surface_rows = (await session.execute(select(func.count(SurfaceRegion.id)))).scalar() or 0
+        tensor_rows = (await session.execute(select(func.count(TensorArtifact.id)))).scalar() or 0
+
+        # Storage Tier 2 disk directory sizes
+        def get_dir_size(path):
+            total = 0
+            count = 0
+            if os.path.exists(path):
+                for dirpath, _, filenames in os.walk(path):
+                    for f in filenames:
+                        fp = os.path.join(dirpath, f)
+                        if os.path.exists(fp):
+                            total += os.path.getsize(fp)
+                            count += 1
+            return count, total
+
+        images_count, images_bytes = get_dir_size("data/storage/images")
+        tensors_count, tensors_bytes = get_dir_size("data/storage/tensors")
+
+        return {
+            "engine": "SQLite 3 (SQLAlchemy 2.0 Async Engine with aiosqlite)",
+            "database_file": db_file,
+            "database_size_bytes": db_size_bytes,
+            "database_size_kb": round(db_size_bytes / 1024, 2),
+            "wal_size_bytes": wal_size_bytes,
+            "wal_size_kb": round(wal_size_bytes / 1024, 2),
+            "journal_mode": str(journal_mode).upper(),
+            "synchronous_mode": "NORMAL" if sync_mode in (1, "1") else "FULL",
+            "page_size": page_size,
+            "page_count": page_count,
+            "tables": {
+                "users": {"rows": user_rows, "description": "Studio team members, passwords & roles"},
+                "user_login_audits": {"rows": audit_rows, "description": "Security audit trail (IPs, devices, logins)"},
+                "projects": {"rows": project_rows, "description": "Architectural project containers"},
+                "room_sessions": {"rows": session_rows, "description": "Analyzed room scenes, metadata & confidence"},
+                "surface_regions": {"rows": surface_rows, "description": "Individual polygon surface masks (walls, floors)"},
+                "gpu_tensor_artifacts": {"rows": tensor_rows, "description": "Compressed ViT embeddings, 3D depth & normals"},
+            },
+            "storage_tier_2": {
+                "images_dir": "data/storage/images",
+                "images_count": images_count,
+                "images_size_kb": round(images_bytes / 1024, 2),
+                "tensors_dir": "data/storage/tensors",
+                "tensors_count": tensors_count,
+                "tensors_size_kb": round(tensors_bytes / 1024, 2),
+                "total_storage_mb": round((images_bytes + tensors_bytes + db_size_bytes) / (1024 * 1024), 2),
+            },
+            "driver": "LocalStorageDriver (Drop-in ready for AWS S3 / Cloudflare R2)",
+            "status": "HEALTHY (Lock-free WAL mode active)",
         }

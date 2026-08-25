@@ -267,6 +267,19 @@ export const apiClient = {
   },
 
   /**
+   * Admin Dashboard: Detailed Low-Level Database Telemetry & Storage Info
+   */
+  async getDatabaseInfo(token) {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/admin/database-info`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch database info");
+    return await res.json();
+  },
+
+  /**
    * Admin Dashboard: Login Audit Trail
    */
   async getLoginAudits(token, limit = 50, offset = 0) {
