@@ -139,13 +139,13 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
           )}
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-300 mb-1">Email Address</label>
+            <label className="block text-[11px] font-bold text-slate-300 mb-1">Username or Email</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
-                type="email"
+                type="text"
                 required
-                placeholder="architect@studio.ai"
+                placeholder="e.g. pa or architect@studio.ai"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"

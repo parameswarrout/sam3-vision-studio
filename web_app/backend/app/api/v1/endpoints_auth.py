@@ -14,13 +14,13 @@ router = APIRouter()
 
 # Pydantic Schemas
 class UserRegisterRequest(BaseModel):
-    email: EmailStr
+    email: str # Supports both username (e.g. 'pa') and email (e.g. 'pa@studio.ai')
     password: str
     full_name: str = "Studio Architect"
     role: str = "architect" # 'admin', 'architect', 'client'
 
 class UserLoginRequest(BaseModel):
-    email: EmailStr
+    email: str # Supports both username (e.g. 'pa') and email (e.g. 'pa@studio.ai')
     password: str
 
 class UserResponse(BaseModel):
