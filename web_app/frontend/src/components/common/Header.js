@@ -17,6 +17,7 @@ import {
   Shield,
   ChevronDown,
   UserPlus,
+  Activity,
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { DeviceSelector } from "./DeviceSelector";
@@ -118,7 +119,7 @@ export function Header({
           </div>
         </div>
 
-        {/* Center: Main Navigation Tabs (V1 vs V2) */}
+        {/* Center: Main Navigation Tabs (V1, V2 & Admin) */}
         <nav className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-inner">
           <Link
             href="/"
@@ -157,6 +158,28 @@ export function Header({
               }`}
             >
               V2
+            </span>
+          </Link>
+
+          {/* Admin Navigation Tab */}
+          <Link
+            href="/admin"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeNav === "admin"
+                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/40 ring-1 ring-purple-400"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5 text-purple-300" />
+            <span>Admin</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
+                activeNav === "admin"
+                  ? "bg-white/30 text-white"
+                  : "bg-slate-800 text-purple-300 border border-purple-500/30"
+              }`}
+            >
+              LOGS
             </span>
           </Link>
         </nav>
@@ -274,7 +297,19 @@ export function Header({
                   </div>
 
                   <div className="space-y-0.5">
-                    <span className="text-[10px] uppercase font-mono font-bold text-slate-500 px-2">
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold text-purple-300 hover:bg-purple-950/40 flex items-center justify-between transition-all"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Activity className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Admin Audit Center</span>
+                      </span>
+                      <span className="text-[10px] px-1 rounded bg-purple-500/20 font-mono">🛡️</span>
+                    </Link>
+
+                    <span className="text-[10px] uppercase font-mono font-bold text-slate-500 px-2 pt-1 block">
                       Quick Role Switch:
                     </span>
                     <button

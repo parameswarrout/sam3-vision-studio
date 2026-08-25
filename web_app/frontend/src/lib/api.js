@@ -254,6 +254,62 @@ export const apiClient = {
   },
 
   /**
+   * Admin Dashboard: System Telemetry & Statistics
+   */
+  async getAdminStats(token) {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/admin/stats`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch admin stats");
+    return await res.json();
+  },
+
+  /**
+   * Admin Dashboard: Login Audit Trail
+   */
+  async getLoginAudits(token, limit = 50, offset = 0) {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/admin/logins?limit=${limit}&offset=${offset}`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch login audits");
+    return await res.json();
+  },
+
+  /**
+   * Admin Dashboard: List Studio Users
+   */
+  async getAdminUsers(token) {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/admin/users`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch studio users");
+    return await res.json();
+  },
+
+  /**
+   * Admin Dashboard: Update User Role
+   */
+  async updateUserRole(token, userId, role) {
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ role }),
+    });
+    if (!res.ok) throw new Error("Failed to update user role");
+    return await res.json();
+  },
+
+  /**
    * Reset Backend Session
    */
   async resetSession() {
