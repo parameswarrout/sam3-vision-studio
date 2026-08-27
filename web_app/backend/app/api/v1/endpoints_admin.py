@@ -62,7 +62,7 @@ async def get_admin_dashboard_stats(
     stats["hardware"] = {
         "device": sam3_service.device,
         "is_cuda": "cuda" in sam3_service.device,
-        "model_loaded": sam3_service.is_loaded(),
+        "model_loaded": bool(sam3_service.is_loaded),
     }
     return stats
 
