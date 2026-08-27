@@ -60,10 +60,23 @@ The V3.0 module (`/v3-tile-visualizer`) brings Physics-Based Rendering (PBR) and
 
 ---
 
+## ✨ SAM 3 V4.0 — CPU AI Generative Latent Diffusion Studio
+
+The V4.0 module (`/v4-generative-studio`) brings high-end generative diffusion inpainting directly on **CPU**:
+1. **8-Core PyTorch CPU Multi-Threading:** Runs Latent Diffusion Inpainting in standard 8GB–16GB system RAM.
+2. **Fast DPM++ 2M SDE Karras:** Achieves high photorealism in only 15–20 inference steps (~30–75s on CPU).
+3. **8 Interior Design Styles:** Curated prompts for Scandinavian Japandi, Italian Carrara Villa, Manhattan Industrial Loft, Parisian Haussmann, Mediterranean Coastal, Midnight Luxury, Tropical Modern, and Art Deco.
+4. **SAM 3 Precision Inpainting:** Restyles segmented floors/walls or whole scenes with raytraced lighting and furniture synthesis.
+
+> For deep architectural details and mathematical formulations, see [**`V4_AI_GENERATIVE_DIFFUSION_ARCHITECTURE.md`**](./V4_AI_GENERATIVE_DIFFUSION_ARCHITECTURE.md).
+
+---
+
 ## 📁 Repository Structure
 
 ```text
 ├── PROJECT_CONTEXT.md                     # Master Architecture and LLM/IDE Reference Guide
+├── V4_AI_GENERATIVE_DIFFUSION_ARCHITECTURE.md # Dedicated SAM 3 V4.0 AI Generative Diffusion Specification
 ├── V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md # Dedicated SAM 3 V3.0 PBR Tile Visualizer Specification
 ├── V2_5_TILE_VISUALIZER_ARCHITECTURE.md   # Dedicated SAM 3 V2.5 Tile Visualizer Specification
 ├── V2_ROOM_ANALYSIS.md                    # Dedicated SAM 3 V2 Room Analysis Specification
@@ -83,14 +96,15 @@ The V3.0 module (`/v3-tile-visualizer`) brings Physics-Based Rendering (PBR) and
     │       ├── room_analysis/             # V2 Analyzer, detector, refiner, classifier
     │       ├── v2_5_tile_visualizer/      # V2.5 Tile Visualizer package
     │       ├── v3_tile_visualizer/        # V3.0 Neural PBR & RANSAC Tile Visualizer package
-    │       ├── schemas/                   # Pydantic schemas (v3_tile.py, v2_5_tile.py, room.py)
-    │       └── api/v1/                    # REST endpoints (health, image, text, points, room, v2.5, v3)
+    │       ├── v4_generative_diffusion/   # V4.0 CPU Latent Diffusion Inpainting package
+    │       ├── schemas/                   # Pydantic schemas (v4_generative.py, v3_tile.py, v2_5_tile.py)
+    │       └── api/v1/                    # REST endpoints (health, image, text, points, room, v2.5, v3, v4)
     └── frontend/                          # Next.js 14 Web Studio (Port 3000)
         └── src/
-            ├── app/                       # / (V1), /room-analysis (V2), /tile-visualizer (V2.5), /v3-tile-visualizer (V3.0)
-            ├── components/                # v3_tile_visualizer/, v2_5_tile_visualizer/, room-analysis/, common/
-            ├── hooks/                     # useTileVisualizerV3.js, useTileVisualizer.js, useRoomAnalysis.js
-            └── lib/                       # api.js (V1, V2, V2.5, V3 client methods)
+            ├── app/                       # / (V1), /room-analysis (V2), /tile-visualizer (V2.5), /v3-tile-visualizer (V3.0), /v4-generative-studio (V4.0)
+            ├── components/                # v4_generative_studio/, v3_tile_visualizer/, v2_5_tile_visualizer/, room-analysis/, common/
+            ├── hooks/                     # useGenerativeStudio.js, useTileVisualizerV3.js, useTileVisualizer.js, useRoomAnalysis.js
+            └── lib/                       # api.js (V1, V2, V2.5, V3, V4 client methods)
 ```
 
 ---
@@ -109,6 +123,7 @@ Once launched:
 * **Room Analysis (V2):** [`http://localhost:3000/room-analysis`](http://localhost:3000/room-analysis)
 * **Tile Visualizer (V2.5):** [`http://localhost:3000/tile-visualizer`](http://localhost:3000/tile-visualizer)
 * **PBR Visualizer (V3.0):** [`http://localhost:3000/v3-tile-visualizer`](http://localhost:3000/v3-tile-visualizer)
+* **AI Generative Studio (V4.0):** [`http://localhost:3000/v4-generative-studio`](http://localhost:3000/v4-generative-studio)
 * **Interactive API Docs:** [`http://127.0.0.1:8000/api/v1/docs`](http://127.0.0.1:8000/api/v1/docs)
 
 ---
@@ -123,6 +138,8 @@ Once launched:
 | `/api/v1/v3/tiles/detect-surface` | `POST` | **V3.0 SAM 3 Surface Grounding** (with obstacle carving) |
 | `/api/v1/v3/tiles/render-tile` | `POST` | **V3.0 PBR Tile Synthesis** (RANSAC VP, Sobel Bump, Fresnel) |
 | `/api/v1/v3/tiles/catalog` | `GET` | **V3.0 MyTyles 16-Tile Catalog** with physical properties |
+| `/api/v1/v4/generate/presets` | `GET` | **V4.0 Curated Architectural Style Presets** |
+| `/api/v1/v4/generate/restyle-room` | `POST` | **V4.0 CPU Latent Diffusion Inpainting** & Room Restyle |
 | `/api/v1/set-image` | `POST` | Upload target image and compute ViT feature embeddings |
 | `/api/v1/segment-text` | `POST` | Open-vocabulary text prompt grounding |
 | `/api/v1/segment-points`| `POST` | Interactive coordinate point segmentation |
@@ -132,6 +149,7 @@ Once launched:
 
 ## 🧠 LLM & IDE Context Documentation
 
+* [**`V4_AI_GENERATIVE_DIFFUSION_ARCHITECTURE.md`**](./V4_AI_GENERATIVE_DIFFUSION_ARCHITECTURE.md) — Master V4.0 specification for CPU Latent Diffusion Inpainting & Architectural Restyling.
 * [**`V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md`**](./V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md) — Master V3.0 specification for Neural Perspective, PBR Normal Mapping, Grout AO, and Fresnel Reflections.
 * [**`V2_5_TILE_VISUALIZER_ARCHITECTURE.md`**](./V2_5_TILE_VISUALIZER_ARCHITECTURE.md) — Complete specification for SAM 3 V2.5 Tile Visualizer.
 * [**`V2_ROOM_ANALYSIS.md`**](./V2_ROOM_ANALYSIS.md) — Complete specification for SAM 3 V2 Automatic Room Analysis.

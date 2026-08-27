@@ -187,7 +187,7 @@ export function Header({
           {/* V3.0 PBR Tile Visualizer Tab */}
           <Link
             href="/v3-tile-visualizer"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeNav === "v3-tile-visualizer"
                 ? "bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 text-white shadow-md shadow-indigo-600/40 ring-1 ring-purple-400"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
@@ -203,6 +203,28 @@ export function Header({
               }`}
             >
               V3.0
+            </span>
+          </Link>
+
+          {/* V4.0 AI Generative Studio Tab */}
+          <Link
+            href="/v4-generative-studio"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeNav === "v4-generative-studio"
+                ? "bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 text-white shadow-md shadow-pink-600/40 ring-1 ring-pink-400"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+            }`}
+          >
+            <Wand2 className="w-3.5 h-3.5 text-amber-300" />
+            <span>AI Generative</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
+                activeNav === "v4-generative-studio"
+                  ? "bg-white/30 text-white"
+                  : "bg-gradient-to-r from-pink-950 to-amber-950 text-amber-300 border border-amber-500/30"
+              }`}
+            >
+              V4.0
             </span>
           </Link>
 

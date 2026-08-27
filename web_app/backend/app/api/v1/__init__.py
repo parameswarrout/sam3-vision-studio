@@ -9,6 +9,7 @@ from app.api.v1.endpoints_auth import router as auth_router
 from app.api.v1.endpoints_admin import router as admin_router
 from app.v2_5_tile_visualizer import v2_5_tile_router
 from app.v3_tile_visualizer import v3_tile_router
+from app.v4_generative_diffusion import v4_generative_router
 
 api_v1_router = APIRouter()
 
@@ -22,3 +23,4 @@ api_v1_router.include_router(room_router, tags=["Automatic Room Analysis (V2)"])
 api_v1_router.include_router(history_router, prefix="/rooms", tags=["Saved History & Database (V2)"])
 api_v1_router.include_router(v2_5_tile_router, prefix="/v2.5/tiles", tags=["Room Tile Visualizer (V2.5)"])
 api_v1_router.include_router(v3_tile_router, prefix="/v3/tiles", tags=["Room Tile Visualizer (V3.0 PBR & Neural Perspective)"])
+api_v1_router.include_router(v4_generative_router, prefix="/v4/generate", tags=["AI Generative Diffusion Studio (V4.0)"])

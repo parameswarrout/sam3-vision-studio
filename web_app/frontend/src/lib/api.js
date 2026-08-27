@@ -463,4 +463,38 @@ export const apiClient = {
     }
     return await res.json();
   },
+
+  /**
+   * V4.0: Get Architectural Style Presets for Generative Restyling
+   */
+  async getGenerativePresetsV4() {
+    const res = await fetch(`${API_BASE_URL}/v4/generate/presets`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch V4 style presets");
+    return await res.json();
+  },
+
+  /**
+   * V4.0: Get CPU Diffusion Engine Readiness Status
+   */
+  async getGenerativeStatusV4() {
+    const res = await fetch(`${API_BASE_URL}/v4/generate/status`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch V4 generator status");
+    return await res.json();
+  },
+
+  /**
+   * V4.0: Execute CPU Generative Inpainting & Room Restyle
+   */
+  async restyleRoomV4(params) {
+    const res = await fetch(`${API_BASE_URL}/v4/generate/restyle-room`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Generative room restyle failed (${res.status})`);
+    }
+    return await res.json();
+  },
 };
