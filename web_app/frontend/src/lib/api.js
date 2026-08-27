@@ -422,4 +422,45 @@ export const apiClient = {
     }
     return await res.json();
   },
+
+  /**
+   * V3.0: Get Architectural Tile Catalog
+   */
+  async getTileCatalogV3() {
+    const res = await fetch(`${API_BASE_URL}/v3/tiles/catalog`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch V3 tile catalog");
+    return await res.json();
+  },
+
+  /**
+   * V3.0: Detect Floor or Wall Surface with SAM 3 (Ensemble Grounding + Obstacle Carving)
+   */
+  async detectTileSurfaceV3(surface_type, confidence = 0.12, custom_prompt = null) {
+    const res = await fetch(`${API_BASE_URL}/v3/tiles/detect-surface`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ surface_type, confidence, custom_prompt }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `V3 Surface detection failed (${res.status})`);
+    }
+    return await res.json();
+  },
+
+  /**
+   * V3.0: Render Tile with PBR Micro-Surface & RANSAC Vanishing Point Snapping
+   */
+  async renderTileVisualizerV3(params) {
+    const res = await fetch(`${API_BASE_URL}/v3/tiles/render-tile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `V3 Tile render failed (${res.status})`);
+    }
+    return await res.json();
+  },
 };

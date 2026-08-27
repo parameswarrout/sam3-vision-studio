@@ -18,6 +18,7 @@ import {
   ChevronDown,
   UserPlus,
   Activity,
+  Compass,
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { DeviceSelector } from "./DeviceSelector";
@@ -164,7 +165,7 @@ export function Header({
           {/* V2.5 Tile Visualizer Tab */}
           <Link
             href="/tile-visualizer"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeNav === "tile-visualizer"
                 ? "bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-500 text-white shadow-md shadow-emerald-600/40 ring-1 ring-emerald-400"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
@@ -180,6 +181,28 @@ export function Header({
               }`}
             >
               V2.5
+            </span>
+          </Link>
+
+          {/* V3.0 PBR Tile Visualizer Tab */}
+          <Link
+            href="/v3-tile-visualizer"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeNav === "v3-tile-visualizer"
+                ? "bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 text-white shadow-md shadow-indigo-600/40 ring-1 ring-purple-400"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5 text-pink-300" />
+            <span>PBR Visualizer</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
+                activeNav === "v3-tile-visualizer"
+                  ? "bg-white/30 text-white"
+                  : "bg-gradient-to-r from-indigo-950 to-purple-950 text-pink-300 border border-pink-500/30"
+              }`}
+            >
+              V3.0
             </span>
           </Link>
 

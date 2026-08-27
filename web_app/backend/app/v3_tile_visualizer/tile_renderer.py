@@ -8,11 +8,11 @@ from PIL import Image
 from typing import Dict, Any, Optional, Tuple
 
 from app.core import api_logger
-from app.v2_5_tile_visualizer.tile_catalog import get_tile_by_id, generate_tile_texture
-from app.v2_5_tile_visualizer.vanishing_point_estimator import vanishing_point_estimator
-from app.v2_5_tile_visualizer.pbr_material_engine import pbr_material_engine
+from app.v3_tile_visualizer.tile_catalog import get_tile_by_id, generate_tile_texture
+from app.v3_tile_visualizer.vanishing_point_estimator import vanishing_point_estimator
+from app.v3_tile_visualizer.pbr_material_engine import pbr_material_engine
 
-class PerspectiveTileRenderer:
+class PerspectiveTileRendererV3:
     """
     V3.0 Photorealistic Neural Perspective & PBR Tile Projection & Blending System.
     Combines:
@@ -41,9 +41,6 @@ class PerspectiveTileRenderer:
         fresnel_reflection_strength: float = 0.50,
         grout_crevice_depth: float = 0.40,
     ) -> Dict[str, Any]:
-        """
-        Renders the chosen tile pattern onto the masked region with the selected blending engine.
-        """
         t0 = time.time()
         w, h = original_img.size
         orig_np = np.array(original_img.convert("RGB"))
@@ -56,6 +53,8 @@ class PerspectiveTileRenderer:
                 "rendered_image_base64": img_b64,
                 "execution_time_ms": 0.0,
                 "blending_mode": blending_mode,
+                "auto_vanishing_point": auto_vanishing_point,
+                "vanishing_point": None,
             }
 
         # 1. Fetch / Generate Tile Texture
@@ -86,11 +85,12 @@ class PerspectiveTileRenderer:
             )
 
         # 5. Perspective Warp Projection (RANSAC Vanishing Point Snapping or Manual)
+        detected_vp = None
         if auto_vanishing_point and surface_type.lower() == "floor":
             vp_res = vanishing_point_estimator.estimate_vanishing_point(orig_np, mask)
-            vp = vp_res["vp"]
+            detected_vp = list(vp_res["vp"])
             M = vanishing_point_estimator.compute_ransac_homography(
-                canvas_w, canvas_h, w, h, vp, surface_type, perspective_strength
+                canvas_w, canvas_h, w, h, vp_res["vp"], surface_type, perspective_strength
             )
             warped_tiles = cv2.warpPerspective(tiled_flat, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_WRAP)
         else:
@@ -142,7 +142,6 @@ class PerspectiveTileRenderer:
                 fresnel_strength=fresnel_reflection_strength,
                 roughness=roughness,
             )
-            # Re-apply anti-aliased composite boundary
             final_np = self._alpha_composite(orig_np, final_np, mask)
         else:
             final_np = modulated_np
@@ -155,7 +154,7 @@ class PerspectiveTileRenderer:
 
         exec_ms = round((time.time() - t0) * 1000, 1)
         api_logger.info(
-            f"[TileRenderer V3.0] Rendered '{tile_id}' using engine '{mode}' on {surface_type} in {exec_ms}ms"
+            f"[V3 TileRenderer] Rendered '{tile_id}' using engine '{mode}' on {surface_type} in {exec_ms}ms"
         )
 
         return {
@@ -163,11 +162,10 @@ class PerspectiveTileRenderer:
             "rendered_pil": rendered_pil,
             "execution_time_ms": exec_ms,
             "blending_mode": mode,
+            "auto_vanishing_point": auto_vanishing_point,
+            "vanishing_point": detected_vp,
         }
 
-    # -------------------------------------------------------------
-    # Perspective Transformation (Standard Vanishing Point Homography)
-    # -------------------------------------------------------------
     def _apply_perspective_warp(
         self, tiled_flat: np.ndarray, canvas_w: int, canvas_h: int, w: int, h: int, surface_type: str, perspective_strength: float
     ) -> np.ndarray:
@@ -197,9 +195,6 @@ class PerspectiveTileRenderer:
         M = cv2.getPerspectiveTransform(pts_src, pts_dst)
         return cv2.warpPerspective(tiled_flat, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_WRAP)
 
-    # -------------------------------------------------------------
-    # Engine 1: Bilateral Guided Shading (Edge-Preserving Macro Shadows)
-    # -------------------------------------------------------------
     def _render_bilateral_shading(
         self, orig_np: np.ndarray, warped_tiles: np.ndarray, mask: np.ndarray, shadow_retention: float, glossiness: float
     ) -> np.ndarray:
@@ -221,9 +216,6 @@ class PerspectiveTileRenderer:
         modulated = np.clip(modulated, 0.0, 255.0)
         return self._alpha_composite(orig_np, modulated, mask)
 
-    # -------------------------------------------------------------
-    # Engine 2: Poisson Seamless Gradient Blending
-    # -------------------------------------------------------------
     def _render_poisson_blending(
         self, orig_np: np.ndarray, warped_tiles: np.ndarray, mask: np.ndarray, shadow_retention: float
     ) -> np.ndarray:
@@ -249,9 +241,6 @@ class PerspectiveTileRenderer:
             api_logger.warning(f"Poisson clone fallback: {e}")
             return self._render_bilateral_shading(orig_np, warped_tiles, mask, shadow_retention, 0.5)
 
-    # -------------------------------------------------------------
-    # Engine 3: Multi-Scale Intrinsic Decomposition
-    # -------------------------------------------------------------
     def _render_intrinsic_decomposition(
         self, orig_np: np.ndarray, warped_tiles: np.ndarray, mask: np.ndarray, shadow_retention: float, glossiness: float
     ) -> np.ndarray:
@@ -279,9 +268,6 @@ class PerspectiveTileRenderer:
         modulated = np.clip(modulated, 0.0, 255.0)
         return self._alpha_composite(orig_np, modulated, mask)
 
-    # -------------------------------------------------------------
-    # Engine 4: Depth & Surface Normal Shading (3D Geometric Falloff)
-    # -------------------------------------------------------------
     def _render_normal_depth_shading(
         self, orig_np: np.ndarray, warped_tiles: np.ndarray, mask: np.ndarray, surface_type: str, shadow_retention: float, glossiness: float
     ) -> np.ndarray:
@@ -319,9 +305,6 @@ class PerspectiveTileRenderer:
 
         return self._alpha_composite(orig_np, modulated, mask)
 
-    # -------------------------------------------------------------
-    # Engine 5: Hybrid Photoreal Matrix (Combined Master Pipeline)
-    # -------------------------------------------------------------
     def _render_hybrid_photoreal(
         self, orig_np: np.ndarray, warped_tiles: np.ndarray, mask: np.ndarray, surface_type: str, shadow_retention: float, glossiness: float
     ) -> np.ndarray:
@@ -347,9 +330,6 @@ class PerspectiveTileRenderer:
         modulated = np.clip(modulated, 0.0, 255.0)
         return self._alpha_composite(orig_np, modulated, mask)
 
-    # -------------------------------------------------------------
-    # Helper: Sub-Pixel Anti-Aliased Alpha Feathering
-    # -------------------------------------------------------------
     def _alpha_composite(self, orig_np: np.ndarray, rendered_layer: np.ndarray, mask: np.ndarray) -> np.ndarray:
         mask_uint = (mask.astype(np.uint8) * 255)
         feathered_mask = cv2.GaussianBlur(mask_uint, (5, 5), 0).astype(np.float32) / 255.0
@@ -361,4 +341,4 @@ class PerspectiveTileRenderer:
         )
         return np.clip(final_composite, 0.0, 255.0).astype(np.uint8)
 
-tile_renderer = PerspectiveTileRenderer()
+tile_renderer_v3 = PerspectiveTileRendererV3()

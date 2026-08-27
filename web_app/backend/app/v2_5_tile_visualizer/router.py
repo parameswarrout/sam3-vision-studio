@@ -154,6 +154,10 @@ async def render_tile_visualizer(req: TileRenderRequest):
             grout_color=req.grout_color,
             glossiness=req.glossiness,
             blending_mode=req.blending_mode,
+            auto_vanishing_point=req.auto_vanishing_point,
+            pbr_bump_strength=req.pbr_bump_strength,
+            fresnel_reflection_strength=req.fresnel_reflection_strength,
+            grout_crevice_depth=req.grout_crevice_depth,
         )
 
         _active_surface_session["last_render_b64"] = render_res["rendered_image_base64"]

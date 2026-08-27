@@ -3,194 +3,64 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { apiClient } from "@/lib/api";
 
-export const SAMPLE_ROOMS = [
+const SAMPLE_ROOMS = [
   {
     id: "living_room",
-    title: "Modern Open Living Room",
-    type: "Living Room",
+    title: "Modern Living Room",
+    category: "Living",
     image: "/samples/living_room.jpg",
+    description: "Spacious open living room with wooden flooring and natural sunlight.",
     recommended_surface: "floor",
-    recommended_tile: "mytyles_rustic_oak_wood",
-    description: "Spacious contemporary living room with large hardwood floor area and sofa seating.",
+    recommended_tile: "mytyles_carrara_marble",
   },
   {
     id: "bathroom",
     title: "Luxury Spa Bathroom",
-    type: "Bathroom",
+    category: "Bathroom",
     image: "/samples/bathroom.jpg",
+    description: "Modern master bathroom with freestanding tub and tiled wall.",
     recommended_surface: "wall",
-    recommended_tile: "mytyles_carrara_marble",
-    description: "Modern bathroom with vanity, shower glass, and prominent wall & floor tiles.",
+    recommended_tile: "mytyles_emerald_subway",
   },
   {
     id: "kitchen",
-    title: "Contemporary Chef Kitchen",
-    type: "Kitchen",
+    title: "Chef Kitchen",
+    category: "Kitchen",
     image: "/samples/kitchen.jpg",
-    recommended_surface: "wall",
-    recommended_tile: "mytyles_emerald_subway",
-    description: "Sleek kitchen backsplash and island countertop with cabinetry and lighting.",
+    description: "Gourmet kitchen with island counters, backsplash, and tiled floor.",
+    recommended_surface: "floor",
+    recommended_tile: "mytyles_calacatta_gold",
   },
   {
     id: "bedroom",
-    title: "Master Suite Bedroom",
-    type: "Bedroom",
+    title: "Minimalist Bedroom",
+    category: "Bedroom",
     image: "/samples/bedroom.jpg",
+    description: "Bright Scandinavian bedroom with warm morning lighting.",
     recommended_surface: "floor",
-    recommended_tile: "mytyles_walnut_herringbone",
-    description: "Warm master bedroom with king bed, side tables, and expansive floor area.",
+    recommended_tile: "mytyles_nordic_ash_wood",
   },
   {
     id: "dining_room",
-    title: "Minimalist Dining Hall",
-    type: "Dining",
+    title: "Contemporary Dining",
+    category: "Dining",
     image: "/samples/dining_room.jpg",
+    description: "Elegant dining room with chandelier and large floor space.",
     recommended_surface: "floor",
-    recommended_tile: "mytyles_calacatta_gold",
-    description: "Elegant open dining space with central table, pendant chandelier, and wide floor.",
+    recommended_tile: "mytyles_walnut_herringbone",
   },
   {
     id: "office",
-    title: "Architect Studio Loft",
-    type: "Office",
+    title: "Executive Office",
+    category: "Commercial",
     image: "/samples/office.jpg",
+    description: "Modern executive office suite with large windows and open area.",
     recommended_surface: "floor",
-    recommended_tile: "mytyles_concrete_industrial",
-    description: "Industrial loft workspace with exposed architectural finishes.",
+    recommended_tile: "mytyles_charcoal_slate",
   },
 ];
 
-export const STYLE_PRESETS = [
-  {
-    id: "italian_marble",
-    name: "MyTyles Statuario Carrara",
-    tile_id: "mytyles_carrara_marble",
-    surface_type: "floor",
-    scale: 1.0,
-    rotation_deg: 0,
-    perspective_strength: 0.70,
-    shadow_retention: 0.80,
-    glossiness: 0.85,
-    grout_color: "#E2E8F0",
-    grout_width: 2,
-    badge: "🏛️ Luxury Marble",
-  },
-  {
-    id: "scandinavian_oak",
-    name: "MyTyles Golden Oak Plank",
-    tile_id: "mytyles_rustic_oak_wood",
-    surface_type: "floor",
-    scale: 1.2,
-    rotation_deg: 0,
-    perspective_strength: 0.65,
-    shadow_retention: 0.75,
-    glossiness: 0.25,
-    grout_color: "#92400E",
-    grout_width: 1,
-    badge: "🌲 Natural Wood",
-  },
-  {
-    id: "parisian_herringbone",
-    name: "MyTyles Walnut Chevron",
-    tile_id: "mytyles_walnut_herringbone",
-    surface_type: "floor",
-    scale: 1.1,
-    rotation_deg: 0,
-    perspective_strength: 0.65,
-    shadow_retention: 0.75,
-    glossiness: 0.50,
-    grout_color: "#451A03",
-    grout_width: 1,
-    badge: "🥖 Classic Chevron",
-  },
-  {
-    id: "emerald_metro",
-    name: "MyTyles Emerald Subway",
-    tile_id: "mytyles_emerald_subway",
-    surface_type: "wall",
-    scale: 0.9,
-    rotation_deg: 0,
-    perspective_strength: 0.30,
-    shadow_retention: 0.70,
-    glossiness: 0.80,
-    grout_color: "#064E3B",
-    grout_width: 2,
-    badge: "🌿 Beveled Subway",
-  },
-  {
-    id: "moroccan_zellige",
-    name: "MyTyles Marrakech Cobalt",
-    tile_id: "mytyles_moroccan_zellige",
-    surface_type: "floor",
-    scale: 0.85,
-    rotation_deg: 0,
-    perspective_strength: 0.60,
-    shadow_retention: 0.70,
-    glossiness: 0.65,
-    grout_color: "#CBD5E1",
-    grout_width: 2,
-    badge: "✨ Moroccan Art",
-  },
-  {
-    id: "industrial_concrete",
-    name: "MyTyles Loft Concrete",
-    tile_id: "mytyles_concrete_industrial",
-    surface_type: "floor",
-    scale: 1.3,
-    rotation_deg: 0,
-    perspective_strength: 0.65,
-    shadow_retention: 0.80,
-    glossiness: 0.55,
-    grout_color: "#64748B",
-    grout_width: 1,
-    badge: "🏢 Urban Concrete",
-  },
-];
-
-export const BLENDING_ENGINES = [
-  {
-    id: "hybrid",
-    name: "Hybrid Photoreal Matrix",
-    badge: "🏆 Recommended",
-    icon: "✨",
-    desc: "Multi-scale intrinsic shadow extraction + normal falloff + sub-pixel feathering",
-    tag: "Master Pipeline",
-  },
-  {
-    id: "bilateral",
-    name: "Bilateral Guided Shading",
-    badge: "⚡ Fast (15ms)",
-    icon: "⚡",
-    desc: "Edge-preserving filter that decouples room shadows from old floor grain",
-    tag: "Smooth Ambient",
-  },
-  {
-    id: "poisson",
-    name: "Poisson Seamless Cloner",
-    badge: "🌊 Gradient PDE",
-    icon: "🌊",
-    desc: "Solves Poisson equation for seamless boundary & color harmonization",
-    tag: "Seamless Skirting",
-  },
-  {
-    id: "intrinsic",
-    name: "Multi-Scale Intrinsic",
-    badge: "🔬 Retinex AI",
-    icon: "🔬",
-    desc: "Decouples low-frequency lighting, ambient occlusion & specular glints",
-    tag: "High Dynamic Range",
-  },
-  {
-    id: "normal_depth",
-    name: "3D Depth & Normal Shading",
-    badge: "📐 3D Geometry",
-    icon: "📐",
-    desc: "Calculates Lambertian directional lighting & geometric distance falloff",
-    tag: "3D Light Bounce",
-  },
-];
-
-export const DEFAULT_TILE_CATALOG = [
+const DEFAULT_TILE_CATALOG = [
   {
     id: "mytyles_carrara_marble",
     name: "MyTyles Statuario Carrara Royal",
@@ -481,27 +351,151 @@ export const DEFAULT_TILE_CATALOG = [
   }
 ];
 
-export function useTileVisualizer() {
+const STYLE_PRESETS = [
+  {
+    id: "preset_carrara_luxe",
+    name: "Statuario Carrara Palace",
+    badge: "🏛️ Royal Marble",
+    tile_id: "mytyles_carrara_marble",
+    surface_type: "floor",
+    scale: 1.1,
+    rotation_deg: 0,
+    perspective_strength: 0.65,
+    shadow_retention: 0.75,
+    grout_width: 2,
+    grout_color: "#E2E8F0",
+    glossiness: 0.85,
+    blending_mode: "hybrid",
+    auto_vanishing_point: true,
+    pbr_bump_strength: 0.40,
+    fresnel_reflection_strength: 0.70,
+    grout_crevice_depth: 0.35,
+  },
+  {
+    id: "preset_herringbone_parlor",
+    name: "French Walnut Chevron",
+    badge: "🥖 French Parquet",
+    tile_id: "mytyles_walnut_herringbone",
+    surface_type: "floor",
+    scale: 1.0,
+    rotation_deg: 45,
+    perspective_strength: 0.70,
+    shadow_retention: 0.80,
+    grout_width: 1,
+    grout_color: "#451A03",
+    glossiness: 0.25,
+    blending_mode: "normal_depth",
+    auto_vanishing_point: true,
+    pbr_bump_strength: 0.75,
+    fresnel_reflection_strength: 0.20,
+    grout_crevice_depth: 0.60,
+  },
+  {
+    id: "preset_emerald_backsplash",
+    name: "Emerald Subway Accent",
+    badge: "💎 Jewel Ceramic",
+    tile_id: "mytyles_emerald_subway",
+    surface_type: "wall",
+    scale: 0.85,
+    rotation_deg: 0,
+    perspective_strength: 0.0,
+    shadow_retention: 0.70,
+    grout_width: 2,
+    grout_color: "#064E3B",
+    glossiness: 0.80,
+    blending_mode: "hybrid",
+    auto_vanishing_point: false,
+    pbr_bump_strength: 0.60,
+    fresnel_reflection_strength: 0.40,
+    grout_crevice_depth: 0.50,
+  },
+  {
+    id: "preset_nordic_serene",
+    name: "Nordic Japandi Timber",
+    badge: "🌿 Japandi Ash",
+    tile_id: "mytyles_nordic_ash_wood",
+    surface_type: "floor",
+    scale: 1.2,
+    rotation_deg: 0,
+    perspective_strength: 0.60,
+    shadow_retention: 0.70,
+    grout_width: 1,
+    grout_color: "#D6D3D1",
+    glossiness: 0.30,
+    blending_mode: "intrinsic",
+    auto_vanishing_point: true,
+    pbr_bump_strength: 0.55,
+    fresnel_reflection_strength: 0.25,
+    grout_crevice_depth: 0.40,
+  },
+];
+
+const BLENDING_ENGINES = [
+  {
+    id: "hybrid",
+    name: "Hybrid Photoreal Matrix",
+    badge: "🏆 Recommended",
+    icon: "🌟",
+    desc: "Multi-scale Intrinsic Retinex + 3D normal depth falloff + edge-preserving bilateral filter.",
+    tag: "Master Quality",
+  },
+  {
+    id: "bilateral",
+    name: "Bilateral Guided Shading",
+    badge: "⚡ Edge-Preserving",
+    icon: "🔬",
+    desc: "Joint bilateral filter separating room shadows from old texture grain.",
+    tag: "Sub-20ms",
+  },
+  {
+    id: "poisson",
+    name: "Poisson Seamless Cloner",
+    badge: "🌊 Gradient PDE",
+    icon: "📐",
+    desc: "Solves Poisson Partial Differential Equation with Dirichlet boundary conditions.",
+    tag: "Seamless Skirting",
+  },
+  {
+    id: "intrinsic",
+    name: "Multi-Scale Intrinsic",
+    badge: "🔬 Scale-Space Retinex",
+    icon: "☀️",
+    desc: "Multi-frequency Gaussian decomposition into low-freq ambient, shadows, and specular highlights.",
+    tag: "HDR Sunlight",
+  },
+  {
+    id: "normal_depth",
+    name: "3D Depth & Normal Shading",
+    badge: "📐 Lambertian Cosine",
+    icon: "🕶️",
+    desc: "3D surface normal gradient vectors and Lambertian light bounce.",
+    tag: "Directional Sun",
+  },
+];
+
+export function useTileVisualizerV3() {
+  const [tileCatalog, setTileCatalog] = useState(DEFAULT_TILE_CATALOG);
   const [selectedRoom, setSelectedRoom] = useState(SAMPLE_ROOMS[0]);
   const [originalImage, setOriginalImage] = useState(SAMPLE_ROOMS[0].image);
   const [originalFile, setOriginalFile] = useState(null);
-  const [surfaceType, setSurfaceType] = useState("floor"); // "floor" | "wall" | "both"
+
+  const [surfaceType, setSurfaceType] = useState("floor");
   const [confidence, setConfidence] = useState(0.12);
   const [customPrompt, setCustomPrompt] = useState("");
-  const [blendingMode, setBlendingMode] = useState("hybrid");
 
-  const [tileCatalog, setTileCatalog] = useState(DEFAULT_TILE_CATALOG);
   const [selectedTileId, setSelectedTileId] = useState("mytyles_carrara_marble");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [blendingMode, setBlendingMode] = useState("hybrid");
 
   const [renderOptions, setRenderOptions] = useState({
     scale: 1.0,
-    rotation_deg: 0.0,
+    rotation_deg: 0,
     perspective_strength: 0.65,
     shadow_retention: 0.75,
     grout_width: 2,
     grout_color: "#D1D5DB",
     glossiness: 0.65,
+    blending_mode: "hybrid",
     auto_vanishing_point: true,
     pbr_bump_strength: 0.50,
     fresnel_reflection_strength: 0.50,
@@ -515,31 +509,29 @@ export function useTileVisualizer() {
   const [surfaceMasks, setSurfaceMasks] = useState([]);
   const [compositeMaskBase64, setCompositeMaskBase64] = useState(null);
   const [renderedImageBase64, setRenderedImageBase64] = useState(null);
-  const [viewMode, setViewMode] = useState("split"); // "split" | "rendered" | "original" | "mask"
-  const [splitPosition, setSplitPosition] = useState(50); // 0 to 100%
+  const [viewMode, setViewMode] = useState("split");
+  const [splitPosition, setSplitPosition] = useState(50);
 
   const [statusMessage, setStatusMessage] = useState("Select a room photo and target surface to begin.");
   const [executionTimeMs, setExecutionTimeMs] = useState(0);
+  const [detectedVanishingPoint, setDetectedVanishingPoint] = useState(null);
 
-  // 1. Fetch Catalog on Load
+  const activeBackendImageRef = useRef(null);
+
   useEffect(() => {
     async function loadCatalog() {
       try {
-        const data = await apiClient.getTileCatalog();
+        const data = await apiClient.getTileCatalogV3();
         if (data && data.length > 0) {
           setTileCatalog(data);
         }
       } catch (err) {
-        console.warn("Could not fetch tile catalog from API, using fallback:", err);
+        console.warn("Using default V3 tile catalog fallback:", err);
       }
     }
     loadCatalog();
   }, []);
 
-  // Reference to track the current active image on backend
-  const activeBackendImageRef = useRef(null);
-
-  // 2. Select Sample Room (Instant UI change, zero auto-upload, zero auto-detect)
   const selectSampleRoom = useCallback((sample) => {
     if (!sample) return;
     setSelectedRoom(sample);
@@ -557,7 +549,6 @@ export function useTileVisualizer() {
     setStatusMessage(`Selected ${sample.title}. Choose Floor or Wall in Section 2 and click '⚡ Detect Surface (SAM 3)'.`);
   }, []);
 
-  // Auto-init first sample in UI (instant, no network call)
   useEffect(() => {
     setSelectedRoom(SAMPLE_ROOMS[0]);
     setOriginalImage(SAMPLE_ROOMS[0].image);
@@ -566,7 +557,6 @@ export function useTileVisualizer() {
     setStatusMessage(`Ready. Click '⚡ Detect Surface (SAM 3)' in Section 2 to segment the floor.`);
   }, []);
 
-  // 3. Upload Custom Room (Instant UI preview, zero auto-upload)
   const uploadCustomRoom = useCallback((file) => {
     if (!file) return;
     setSelectedRoom(null);
@@ -585,12 +575,10 @@ export function useTileVisualizer() {
     setStatusMessage("Custom room loaded! Choose Floor or Wall in Section 2 and click '⚡ Detect Surface (SAM 3)'.");
   }, []);
 
-  // 4. Trigger Surface Detection with SAM 3 (ONLY runs on user button click)
   const detectSurface = useCallback(async () => {
     try {
       setIsDetecting(true);
 
-      // Step A: Upload image to SAM 3 neural engine if not yet cached on backend
       const targetImageKey = selectedRoom ? selectedRoom.id : "custom_upload";
       if (activeBackendImageRef.current !== targetImageKey) {
         setIsUploading(true);
@@ -612,10 +600,9 @@ export function useTileVisualizer() {
         setIsUploading(false);
       }
 
-      // Step B: Run text-prompt open-vocabulary segmentation on the surface
       setStatusMessage(`Segmenting ${surfaceType.toUpperCase()} with SAM 3 vision transformer...`);
 
-      const res = await apiClient.detectTileSurface(
+      const res = await apiClient.detectTileSurfaceV3(
         surfaceType,
         confidence,
         customPrompt || null
@@ -637,12 +624,10 @@ export function useTileVisualizer() {
     }
   }, [surfaceType, confidence, customPrompt, selectedRoom, originalFile]);
 
-  // 5. Render Tile Visualizer (ONLY runs on user button click)
   const renderTile = useCallback(async (overrideTileId = null, overrideOptions = null) => {
     const tileId = overrideTileId || selectedTileId;
     const opts = overrideOptions || renderOptions;
 
-    // Strict check: User must detect surface first before rendering
     if (!compositeMaskBase64) {
       alert("Please detect the room surface first by clicking '⚡ Detect Surface (SAM 3)' in Section 2!");
       setStatusMessage("Surface not detected yet. Click '⚡ Detect Surface (SAM 3)' in Section 2 first.");
@@ -651,9 +636,9 @@ export function useTileVisualizer() {
 
     try {
       setIsRendering(true);
-      setStatusMessage(`Rendering ${tileId} with ${opts.blending_mode || blendingMode} blending...`);
+      setStatusMessage(`Rendering ${tileId} with V3.0 PBR & ${opts.blending_mode || blendingMode} blending...`);
 
-      const res = await apiClient.renderTileVisualizer({
+      const res = await apiClient.renderTileVisualizerV3({
         tile_id: tileId,
         surface_type: surfaceType,
         scale: opts.scale,
@@ -664,11 +649,16 @@ export function useTileVisualizer() {
         grout_color: opts.grout_color,
         glossiness: opts.glossiness,
         blending_mode: opts.blending_mode || blendingMode,
+        auto_vanishing_point: opts.auto_vanishing_point,
+        pbr_bump_strength: opts.pbr_bump_strength,
+        fresnel_reflection_strength: opts.fresnel_reflection_strength,
+        grout_crevice_depth: opts.grout_crevice_depth,
       });
 
       if (res.success) {
         setRenderedImageBase64(res.rendered_image_base64);
         setExecutionTimeMs(res.execution_time_ms);
+        setDetectedVanishingPoint(res.vanishing_point);
         setViewMode("split");
         setStatusMessage(res.message);
       }
@@ -680,7 +670,6 @@ export function useTileVisualizer() {
     }
   }, [selectedTileId, renderOptions, surfaceType, compositeMaskBase64, blendingMode]);
 
-  // 6. Apply Preset (Only updates controls & tile selection, does NOT auto-render)
   const applyPreset = useCallback((preset) => {
     setSelectedTileId(preset.tile_id);
     setSurfaceType(preset.surface_type);
@@ -693,6 +682,10 @@ export function useTileVisualizer() {
       grout_color: preset.grout_color,
       glossiness: preset.glossiness,
       blending_mode: preset.blending_mode || "hybrid",
+      auto_vanishing_point: preset.auto_vanishing_point ?? true,
+      pbr_bump_strength: preset.pbr_bump_strength ?? 0.50,
+      fresnel_reflection_strength: preset.fresnel_reflection_strength ?? 0.50,
+      grout_crevice_depth: preset.grout_crevice_depth ?? 0.40,
     };
     setRenderOptions(newOpts);
     setStatusMessage(`Applied preset '${preset.name}'. Click '✨ Render Tiles onto Room' in Section 4 to render.`);
@@ -732,6 +725,7 @@ export function useTileVisualizer() {
     setSplitPosition,
     statusMessage,
     executionTimeMs,
+    detectedVanishingPoint,
     selectSampleRoom,
     uploadCustomRoom,
     detectSurface,

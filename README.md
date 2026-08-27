@@ -42,40 +42,55 @@ The V2 module (`/room-analysis`) brings autonomous indoor architectural surface 
 1. **Multi-Plane Walls:** Disambiguates complex indoor rooms into distinct wall facets (`wall_1`, `wall_2`, `wall_3` — Left, Center, Right Wall Planes).
 2. **Hierarchical Topological Carving:** Openings (Windows & Doors) are structurally carved out from wall masks; occluding Furniture is carved out from floors.
 3. **Multi-Signal Confidence Scoring:** Combines SAM logits, 3D spatial priors, shape solidity, and intersection penalties.
-4. **SHA-256 LRU Image Cache:** Instant cache retrieval on identical images without redundant GPU re-inference.
-5. **Interactive UI:** Real-time mask opacity slider, category filter chips (Walls, Floor, Openings, Furniture), and individual layer eye show/hide toggles.
 
 > For deep architectural details and mathematical formulations, see [**`V2_ROOM_ANALYSIS.md`**](./V2_ROOM_ANALYSIS.md).
+
+---
+
+## 🧱 SAM 3 V3.0 — Neural Perspective & PBR Room Tile Visualizer
+
+The V3.0 module (`/v3-tile-visualizer`) brings Physics-Based Rendering (PBR) and RANSAC perspective alignment:
+1. **RANSAC Architectural Vanishing Point:** Hough line detection and RANSAC consensus clustering automatically align perspective homography with room baseboards.
+2. **3D Normal Bump Mapping:** Dynamic Sobel spatial gradients generate tactile 3D relief for natural stone clefts and wood pores.
+3. **Grout Crevices with Ambient Occlusion (AO):** Distance transform profiling deepens shadow crevices along tile seams.
+4. **Schlick's Fresnel Window Reflections:** Inverts and re-projects window daylight and room chandelier reflections with roughness bloom onto high-gloss marble.
+5. **16 Real MyTyles Varieties:** Authentic catalog with calibrated roughness and specularity downloaded directly from MyTyles.com.
+
+> For complete technical and mathematical specifications, see [**`V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md`**](./V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md) and [**`V2_5_TILE_VISUALIZER_ARCHITECTURE.md`**](./V2_5_TILE_VISUALIZER_ARCHITECTURE.md).
 
 ---
 
 ## 📁 Repository Structure
 
 ```text
-├── PROJECT_CONTEXT.md         # Master Architecture and LLM/IDE Reference Guide
-├── V2_ROOM_ANALYSIS.md        # Dedicated SAM 3 V2 Room Analysis Specification
-├── .cursorrules               # AI IDE instructions for Cursor, Windsurf, Copilot
-├── download_sam3.py           # Checkpoint downloader from Hugging Face
+├── PROJECT_CONTEXT.md                     # Master Architecture and LLM/IDE Reference Guide
+├── V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md # Dedicated SAM 3 V3.0 PBR Tile Visualizer Specification
+├── V2_5_TILE_VISUALIZER_ARCHITECTURE.md   # Dedicated SAM 3 V2.5 Tile Visualizer Specification
+├── V2_ROOM_ANALYSIS.md                    # Dedicated SAM 3 V2 Room Analysis Specification
+├── .cursorrules                           # AI IDE instructions for Cursor, Windsurf, Copilot
+├── download_sam3.py                       # Checkpoint downloader from Hugging Face
 │
-├── sam3/                      # Meta SAM 3 Model Engine & Weights
-│   ├── checkpoints/sam3.pt    # 3.45 GB Foundation Model Checkpoint
-│   └── sam3/                  # ViT backbone, attention layers, model builder
+├── sam3/                                  # Meta SAM 3 Model Engine & Weights
+│   ├── checkpoints/sam3.pt                # 3.45 GB Foundation Model Checkpoint
+│   └── sam3/                              # ViT backbone, attention layers, model builder
 │
-└── web_app/                   # Full-Stack Application
-    ├── launch_all.bat         # 1-Click Windows Launcher
-    ├── backend/               # FastAPI Server (Port 8000)
-    │   ├── run.py             # Server runner with path resolution
+└── web_app/                               # Full-Stack Application
+    ├── launch_all.bat                     # 1-Click Windows Launcher
+    ├── backend/                           # FastAPI Server (Port 8000)
+    │   ├── run.py                         # Server runner with path resolution
     │   └── app/
-    │       ├── core/          # sam3_service.py, mask_engine.py, logger.py
-    │       ├── room_analysis/ # analyzer, detector, mask_refiner, classifier, cache
-    │       ├── schemas/       # Strict Pydantic schemas (requests.py, room.py)
-    │       └── api/v1/        # REST endpoints (health, image, text, points, room)
-    └── frontend/              # Next.js 14 Web Studio (Port 3000/3001/3002)
+    │       ├── core/                      # sam3_service.py, mask_engine.py, logger.py
+    │       ├── room_analysis/             # V2 Analyzer, detector, refiner, classifier
+    │       ├── v2_5_tile_visualizer/      # V2.5 Tile Visualizer package
+    │       ├── v3_tile_visualizer/        # V3.0 Neural PBR & RANSAC Tile Visualizer package
+    │       ├── schemas/                   # Pydantic schemas (v3_tile.py, v2_5_tile.py, room.py)
+    │       └── api/v1/                    # REST endpoints (health, image, text, points, room, v2.5, v3)
+    └── frontend/                          # Next.js 14 Web Studio (Port 3000)
         └── src/
-            ├── app/           # page.js (V1 Manual), room-analysis/page.js (V2)
-            ├── components/    # canvas/, common/, room-analysis/
-            ├── hooks/         # useSamSession.js, useRoomAnalysis.js, useBackendHealth.js
-            └── lib/           # api.js (XMLHttpRequest progress client)
+            ├── app/                       # / (V1), /room-analysis (V2), /tile-visualizer (V2.5), /v3-tile-visualizer (V3.0)
+            ├── components/                # v3_tile_visualizer/, v2_5_tile_visualizer/, room-analysis/, common/
+            ├── hooks/                     # useTileVisualizerV3.js, useTileVisualizer.js, useRoomAnalysis.js
+            └── lib/                       # api.js (V1, V2, V2.5, V3 client methods)
 ```
 
 ---
@@ -90,27 +105,11 @@ launch_all.bat
 ```
 
 Once launched:
-* **Manual Segmentation (V1):** [`http://localhost:3000`](http://localhost:3000) (or `http://localhost:3001` / `http://localhost:3002`)
+* **Manual Segmentation (V1):** [`http://localhost:3000`](http://localhost:3000)
 * **Room Analysis (V2):** [`http://localhost:3000/room-analysis`](http://localhost:3000/room-analysis)
+* **Tile Visualizer (V2.5):** [`http://localhost:3000/tile-visualizer`](http://localhost:3000/tile-visualizer)
+* **PBR Visualizer (V3.0):** [`http://localhost:3000/v3-tile-visualizer`](http://localhost:3000/v3-tile-visualizer)
 * **Interactive API Docs:** [`http://127.0.0.1:8000/api/v1/docs`](http://127.0.0.1:8000/api/v1/docs)
-
----
-
-## 🛠️ Manual Setup
-
-### 1. Backend (FastAPI)
-```bash
-cd web_app/backend
-pip install -r requirements.txt
-python run.py
-```
-
-### 2. Frontend (Next.js)
-```bash
-cd web_app/frontend
-npm install
-npm run dev
-```
 
 ---
 
@@ -121,6 +120,9 @@ npm run dev
 | `/api/v1/health` | `GET` | Server health, active compute device, and model readiness |
 | `/api/v1/device/switch` | `POST` | Dynamically re-allocate weights to `"cuda"` or `"cpu"` |
 | `/api/v1/analyze-room` | `POST` | **V2 Autonomous Room Analysis** (Walls, Floor, Openings, Furniture) |
+| `/api/v1/v3/tiles/detect-surface` | `POST` | **V3.0 SAM 3 Surface Grounding** (with obstacle carving) |
+| `/api/v1/v3/tiles/render-tile` | `POST` | **V3.0 PBR Tile Synthesis** (RANSAC VP, Sobel Bump, Fresnel) |
+| `/api/v1/v3/tiles/catalog` | `GET` | **V3.0 MyTyles 16-Tile Catalog** with physical properties |
 | `/api/v1/set-image` | `POST` | Upload target image and compute ViT feature embeddings |
 | `/api/v1/segment-text` | `POST` | Open-vocabulary text prompt grounding |
 | `/api/v1/segment-points`| `POST` | Interactive coordinate point segmentation |
@@ -130,5 +132,7 @@ npm run dev
 
 ## 🧠 LLM & IDE Context Documentation
 
-* [**`PROJECT_CONTEXT.md`**](./PROJECT_CONTEXT.md) — Master LLM context, architectural diagrams, state management, and file index.
+* [**`V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md`**](./V3_TILE_VISUALIZER_PBR_ARCHITECTURE.md) — Master V3.0 specification for Neural Perspective, PBR Normal Mapping, Grout AO, and Fresnel Reflections.
+* [**`V2_5_TILE_VISUALIZER_ARCHITECTURE.md`**](./V2_5_TILE_VISUALIZER_ARCHITECTURE.md) — Complete specification for SAM 3 V2.5 Tile Visualizer.
 * [**`V2_ROOM_ANALYSIS.md`**](./V2_ROOM_ANALYSIS.md) — Complete specification for SAM 3 V2 Automatic Room Analysis.
+* [**`PROJECT_CONTEXT.md`**](./PROJECT_CONTEXT.md) — Master architectural overview, state management, and full file index.
