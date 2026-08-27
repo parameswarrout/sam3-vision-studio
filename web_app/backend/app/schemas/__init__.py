@@ -14,6 +14,15 @@ from app.schemas.room import (
     RoomAnalysisMetadata,
 )
 
+from app.schemas.v2_5_tile import (
+    TileCatalogItem,
+    SurfaceDetectRequest,
+    SurfaceDetectResponse,
+    SurfaceMaskInfo,
+    TileRenderRequest,
+    TileRenderResponse,
+)
+
 __all__ = [
     "PointPromptItem",
     "PointPromptRequest",
@@ -26,4 +35,10 @@ __all__ = [
     "RoomRegionItem",
     "RoomAnalysisResponse",
     "RoomAnalysisMetadata",
+    "TileCatalogItem",
+    "SurfaceDetectRequest",
+    "SurfaceDetectResponse",
+    "SurfaceMaskInfo",
+    "TileRenderRequest",
+    "TileRenderResponse",
 ]

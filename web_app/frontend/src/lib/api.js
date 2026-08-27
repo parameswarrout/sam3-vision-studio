@@ -381,4 +381,45 @@ export const apiClient = {
     const res = await fetch(`${API_BASE_URL}/reset`, { method: "POST" });
     return await res.json();
   },
+
+  /**
+   * V2.5: Get Curated Tile Catalog (15+ Varieties)
+   */
+  async getTileCatalog() {
+    const res = await fetch(`${API_BASE_URL}/v2.5/tiles/catalog`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch tile catalog");
+    return await res.json();
+  },
+
+  /**
+   * V2.5: Detect Floor or Wall Surface with SAM 3
+   */
+  async detectTileSurface(surface_type, confidence = 0.10, custom_prompt = null) {
+    const res = await fetch(`${API_BASE_URL}/v2.5/tiles/detect-surface`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ surface_type, confidence, custom_prompt }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Surface detection failed (${res.status})`);
+    }
+    return await res.json();
+  },
+
+  /**
+   * V2.5: Render Selected Tile onto Room Surface
+   */
+  async renderTileVisualizer(params) {
+    const res = await fetch(`${API_BASE_URL}/v2.5/tiles/render-tile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Tile render failed (${res.status})`);
+    }
+    return await res.json();
+  },
 };

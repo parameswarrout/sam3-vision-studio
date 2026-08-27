@@ -18,6 +18,9 @@ env/
 venv/
 .venv/
 ENV/
+venv_sam3/
+.venv_sam3/
+*venv*
 
 # Large Model Binaries & Weights (Never commit to GitHub directly)
 *.pt

@@ -161,6 +161,28 @@ export function Header({
             </span>
           </Link>
 
+          {/* V2.5 Tile Visualizer Tab */}
+          <Link
+            href="/tile-visualizer"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeNav === "tile-visualizer"
+                ? "bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-500 text-white shadow-md shadow-emerald-600/40 ring-1 ring-emerald-400"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Tile Visualizer</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
+                activeNav === "tile-visualizer"
+                  ? "bg-white/30 text-white"
+                  : "bg-slate-800 text-emerald-300 border border-emerald-500/30"
+              }`}
+            >
+              V2.5
+            </span>
+          </Link>
+
           {/* Admin Navigation Tab */}
           <Link
             href="/admin"

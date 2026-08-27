@@ -6,7 +6,11 @@ echo ========================================================
 echo.
 
 echo [1/2] Starting Python FastAPI Backend on http://localhost:8000 ...
-start "SAM 3 FastAPI Backend" cmd /k "cd backend && python run.py"
+if exist "..\venv_sam3\Scripts\python.exe" (
+    start "SAM 3 FastAPI Backend" cmd /k "cd backend && ..\venv_sam3\Scripts\python.exe run.py"
+) else (
+    start "SAM 3 FastAPI Backend" cmd /k "cd backend && python run.py"
+)
 
 timeout /t 2 /nobreak >nul
 
