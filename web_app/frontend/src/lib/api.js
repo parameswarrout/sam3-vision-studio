@@ -362,6 +362,19 @@ export const apiClient = {
   },
 
   /**
+   * Admin Dashboard: Live Table Schema and Data Browser
+   */
+  async getTableData(token, tableName, limit = 50) {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/admin/tables/${tableName}?limit=${limit}`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch table data for ${tableName}`);
+    return await res.json();
+  },
+
+  /**
    * Reset Backend Session
    */
   async resetSession() {

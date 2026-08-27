@@ -74,6 +74,39 @@ async def get_database_telemetry_info(
     """Returns detailed low-level SQLite database telemetry, WAL flags, table metrics, and storage breakdown."""
     return await UserRepository.get_detailed_database_info(db)
 
+@router.get("/tables/{table_name}")
+async def get_table_data(
+    table_name: str,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_role(["admin"])),
+):
+    """Fetches schema columns and raw live data rows for any database table."""
+    valid_tables = {
+        "users": "SELECT id, email, full_name, role, is_active, last_login_at, created_at, updated_at FROM users ORDER BY created_at DESC",
+        "user_login_audits": "SELECT id, user_id, username_or_email, role, status, ip_address, user_agent, created_at FROM user_login_audits ORDER BY created_at DESC",
+        "projects": "SELECT id, user_id, name, description, created_at FROM projects ORDER BY created_at DESC",
+        "room_sessions": "SELECT id, project_id, user_id, image_hash, room_title, image_width, image_height, overall_confidence, wall_count, floor_count, total_surfaces, created_at FROM room_sessions ORDER BY created_at DESC",
+        "surface_regions": "SELECT id, room_session_id, surface_type, label, confidence, area_ratio, color_hex, plane_index, needs_review, created_at FROM surface_regions ORDER BY created_at DESC",
+        "gpu_tensor_artifacts": "SELECT id, room_session_id, storage_backend, tensor_uri, file_size_bytes, vit_tensor_shape, depth_shape, normals_shape, compression, compute_device, created_at FROM gpu_tensor_artifacts ORDER BY created_at DESC",
+    }
+
+    if table_name not in valid_tables:
+        raise HTTPException(status_code=400, detail=f"Invalid table '{table_name}'. Valid: {list(valid_tables.keys())}")
+
+    query_str = f"{valid_tables[table_name]} LIMIT {limit}"
+    from sqlalchemy import text
+    result = await db.execute(text(query_str))
+    columns = list(result.keys())
+    rows = [dict(zip(columns, [str(val) if isinstance(val, datetime) else val for val in row])) for row in result.fetchall()]
+
+    return {
+        "table_name": table_name,
+        "columns": columns,
+        "row_count": len(rows),
+        "rows": rows,
+    }
+
 @router.get("/logins", response_model=List[LoginAuditItem])
 async def get_login_audit_trail(
     limit: int = 50,

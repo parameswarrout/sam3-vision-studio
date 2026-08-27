@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/common/Header";
 import { UserManageModal } from "@/components/admin/UserManageModal";
+import { DatabaseSchemaViewer } from "@/components/admin/DatabaseSchemaViewer";
 import { useBackendHealth } from "@/hooks/useBackendHealth";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api";
@@ -556,156 +557,9 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* 5. Deep Database Telemetry & Storage Inspector Panel */}
+        {/* 5. Deep Database Telemetry, Interactive Schema ERD & Table Browser */}
         {activeTab === "database" && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            {/* Database Engine Architecture Overview */}
-            <div className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-md">
-                    <Database className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-base text-white">Database Engine Telemetry</h3>
-                    <p className="text-xs text-slate-400 font-mono">
-                      {dbInfo?.engine || "SQLAlchemy 2.0 Async (aiosqlite)"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-xs font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>WAL Mode: {dbInfo?.journal_mode || "WAL"}</span>
-                  </span>
-                  <span className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 font-mono text-xs">
-                    Sync: {dbInfo?.synchronous_mode || "NORMAL"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Database File & Path Metrics */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-slate-500 text-[11px] block">Database File Size</span>
-                  <span className="text-white font-bold text-sm mt-0.5 block">
-                    {dbInfo?.database_size_kb ?? 0} KB
-                  </span>
-                  <span className="text-[10px] text-slate-500 truncate block mt-0.5" title={dbInfo?.database_file}>
-                    {dbInfo?.database_file || "data/rooms.db"}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-slate-500 text-[11px] block">Write-Ahead Log (WAL)</span>
-                  <span className="text-white font-bold text-sm mt-0.5 block">
-                    {dbInfo?.wal_size_kb ?? 0} KB
-                  </span>
-                  <span className="text-[10px] text-indigo-400 block mt-0.5">
-                    Lock-free concurrent reads
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-slate-500 text-[11px] block">Pages & Page Size</span>
-                  <span className="text-white font-bold text-sm mt-0.5 block">
-                    {dbInfo?.page_count ?? 0} pages @ {dbInfo?.page_size ?? 4096}B
-                  </span>
-                  <span className="text-[10px] text-emerald-400 block mt-0.5">
-                    Fast B-Tree Indexing
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Table-by-Table Row & Schema Breakdown */}
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 shadow-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div>
-                  <h3 className="font-extrabold text-sm text-white">Relational Tables Breakdown</h3>
-                  <p className="text-xs text-slate-400">Declarative SQLAlchemy ORM entities in SQLite</p>
-                </div>
-                <span className="text-xs font-mono font-bold text-indigo-400">
-                  6 Tables Active
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {dbInfo?.tables &&
-                  Object.entries(dbInfo.tables).map(([tableName, tData]) => (
-                    <div
-                      key={tableName}
-                      className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800/80 flex flex-col justify-between gap-2 hover:border-slate-700 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
-                          <span className="font-mono font-bold text-xs text-white">{tableName}</span>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-lg bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 font-mono text-[11px] font-black">
-                          {tData.rows} rows
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 font-sans">
-                        {tData.description}
-                      </p>
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            {/* Storage Tier 2 Breakdown (Images vs Heavy Tensors) */}
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 shadow-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-sky-600/20 border border-sky-500/40 flex items-center justify-center text-sky-400">
-                    <FolderArchive className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-white">Tier 2 Binary Storage Driver</h3>
-                    <p className="text-xs text-slate-400 font-mono">
-                      {dbInfo?.driver || "LocalStorageDriver"}
-                    </p>
-                  </div>
-                </div>
-
-                <span className="px-3 py-1 rounded-xl bg-purple-950/80 border border-purple-500/40 text-purple-300 font-mono text-xs font-black">
-                  Total: {dbInfo?.storage_tier_2?.total_storage_mb ?? 0} MB
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Images Storage */}
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">Room Photos & Thumbnails</span>
-                    <span className="text-[11px] font-mono text-sky-400 font-bold">
-                      {dbInfo?.storage_tier_2?.images_count ?? 0} files
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 font-mono">Directory: data/storage/images</p>
-                  <div className="text-base font-black text-white font-mono">
-                    {dbInfo?.storage_tier_2?.images_size_kb ?? 0} KB
-                  </div>
-                </div>
-
-                {/* Tensors Storage */}
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">Heavy GPU Tensors (.npz)</span>
-                    <span className="text-[11px] font-mono text-purple-400 font-bold">
-                      {dbInfo?.storage_tier_2?.tensors_count ?? 0} archives
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 font-mono">Directory: data/storage/tensors</p>
-                  <div className="text-base font-black text-white font-mono">
-                    {dbInfo?.storage_tier_2?.tensors_size_kb ?? 0} KB
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DatabaseSchemaViewer token={token} dbInfo={dbInfo} />
         )}
       </main>
 
