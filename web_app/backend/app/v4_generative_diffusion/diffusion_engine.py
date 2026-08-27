@@ -12,8 +12,11 @@ from app.core import api_logger
 from app.v4_generative_diffusion.prompt_architect import prompt_architect
 
 # Default open-weight inpainting model
+from pathlib import Path
+
 DEFAULT_INPAINT_MODEL_ID = "runwayml/stable-diffusion-inpainting"
 FALLBACK_INPAINT_MODEL_ID = "stabilityai/stable-diffusion-2-inpainting"
+LOCAL_MODEL_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "models" / "diffusion_inpaint"
 
 class CPUDiffusionEngine:
     """
@@ -36,6 +39,17 @@ class CPUDiffusionEngine:
         except Exception as e:
             api_logger.warning(f"[CPUDiffusionEngine] Thread setting warning: {e}")
 
+    def _get_hf_token(self) -> Optional[str]:
+        token = os.environ.get("HF_TOKEN")
+        if not token:
+            token_path = Path.home() / ".cache" / "huggingface" / "token"
+            if token_path.exists():
+                try:
+                    token = token_path.read_text().strip()
+                except Exception:
+                    pass
+        return token
+
     def load_pipeline_if_needed(self):
         """Lazy loads the diffusion inpainting pipeline on demand."""
         if self.pipe is not None:
@@ -48,18 +62,38 @@ class CPUDiffusionEngine:
 
         self.is_loading = True
         t0 = time.time()
-        api_logger.info(f"[CPUDiffusionEngine] Loading Diffusion Inpainting Model '{self.model_id}' onto CPU...")
 
         try:
             from diffusers import StableDiffusionInpaintPipeline, DPMSolverMultistepScheduler
 
-            # Load model with CPU optimization
-            self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
-                self.model_id,
-                torch_dtype=torch.float32,
-                safety_checker=None,
-                low_cpu_mem_usage=True,
-            )
+            # 1. Check if local directory exists first
+            if LOCAL_MODEL_PATH.exists() and (LOCAL_MODEL_PATH / "model_index.json").exists():
+                api_logger.info(f"[CPUDiffusionEngine] Loading Diffusion Model directly from local directory '{LOCAL_MODEL_PATH}'...")
+                self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
+                    str(LOCAL_MODEL_PATH),
+                    torch_dtype=torch.float32,
+                    safety_checker=None,
+                    low_cpu_mem_usage=True,
+                    local_files_only=True,
+                )
+            else:
+                token = self._get_hf_token()
+                api_logger.info(f"[CPUDiffusionEngine] Loading Diffusion Inpainting Model '{self.model_id}' (HF Token: {'Present' if token else 'None'})...")
+                self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
+                    self.model_id,
+                    token=token,
+                    torch_dtype=torch.float32,
+                    safety_checker=None,
+                    low_cpu_mem_usage=True,
+                )
+
+                # Save locally for future offline instant loading
+                try:
+                    LOCAL_MODEL_PATH.mkdir(parents=True, exist_ok=True)
+                    self.pipe.save_pretrained(LOCAL_MODEL_PATH)
+                    api_logger.info(f"[CPUDiffusionEngine] Cached pipeline locally at '{LOCAL_MODEL_PATH}'.")
+                except Exception as save_err:
+                    api_logger.warning(f"[CPUDiffusionEngine] Could not cache model locally: {save_err}")
 
             # Use fast DPMSolver++ Scheduler (Reaches photorealism in 15-20 steps instead of 50)
             self.pipe.scheduler = DPMSolverMultistepScheduler.from_config(
