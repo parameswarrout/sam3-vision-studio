@@ -40,6 +40,17 @@ async def init_db():
         
         # Create all tables if they do not exist
         await conn.run_sync(Base.metadata.create_all)
+        
+        # Safe column check/migration for SQLite
+        if "sqlite" in DATABASE_URL:
+            try:
+                res = await conn.exec_driver_sql("PRAGMA table_info(room_sessions);")
+                cols = [row[1] for row in res.fetchall()]
+                if cols and "room_category" not in cols:
+                    await conn.exec_driver_sql("ALTER TABLE room_sessions ADD COLUMN room_category VARCHAR(50) DEFAULT 'interior_room';")
+            except Exception as migration_err:
+                api_logger.debug(f"[Database] Migration check: {migration_err}")
+
         api_logger.info("[Database] Schema verified and tables initialized.")
 
 async def get_db():

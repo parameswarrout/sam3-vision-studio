@@ -2,11 +2,11 @@ import unittest
 import numpy as np
 from PIL import Image
 
-from app.v2_room_analysis.cache import RoomAnalysisCache
-from app.v2_room_analysis.mask_refiner import MaskRefiner
-from app.v2_room_analysis.region_classifier import RegionClassifier
-from app.v2_room_analysis.depth_estimator import DepthEstimator
-from app.v2_room_analysis.geometry_analyzer import GeometryAnalyzer
+from app.services.room_analysis.cache import RoomAnalysisCache
+from app.services.room_analysis.mask_refiner import MaskRefiner
+from app.services.room_analysis.region_classifier import RegionClassifier
+from app.services.room_analysis.depth_estimator import DepthEstimator
+from app.services.room_analysis.geometry_analyzer import GeometryAnalyzer
 from app.schemas.room import RoomRegionItem, RoomAnalysisResponse, RoomAnalysisMetadata, QualityScores
 
 class TestRoomAnalyzerComponents(unittest.TestCase):

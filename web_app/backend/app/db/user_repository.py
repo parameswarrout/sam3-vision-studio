@@ -134,9 +134,10 @@ class UserRepository:
     @staticmethod
     async def get_detailed_database_info(session: AsyncSession) -> Dict[str, Any]:
         """Collects low-level SQLite database telemetry, table row counts, PRAGMA flags, and storage disk usage."""
-        db_file = os.path.abspath("data/rooms.db")
-        wal_file = os.path.abspath("data/rooms.db-wal")
-        shm_file = os.path.abspath("data/rooms.db-shm")
+        from app.config import settings
+        db_file = str(settings.DATA_DIR / "rooms.db")
+        wal_file = str(settings.DATA_DIR / "rooms.db-wal")
+        shm_file = str(settings.DATA_DIR / "rooms.db-shm")
 
         db_size_bytes = os.path.getsize(db_file) if os.path.exists(db_file) else 0
         wal_size_bytes = os.path.getsize(wal_file) if os.path.exists(wal_file) else 0
@@ -168,8 +169,10 @@ class UserRepository:
                             count += 1
             return count, total
 
-        images_count, images_bytes = get_dir_size("data/storage/images")
-        tensors_count, tensors_bytes = get_dir_size("data/storage/tensors")
+        images_dir = str(settings.STORAGE_DIR / "images")
+        tensors_dir = str(settings.STORAGE_DIR / "tensors")
+        images_count, images_bytes = get_dir_size(images_dir)
+        tensors_count, tensors_bytes = get_dir_size(tensors_dir)
 
         return {
             "engine": "SQLite 3 (SQLAlchemy 2.0 Async Engine with aiosqlite)",

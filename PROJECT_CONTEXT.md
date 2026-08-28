@@ -47,36 +47,34 @@ Segmentation_model_by_meta/
     │   ├── run.py                       # Server entrypoint with custom sys.path prioritization
     │   ├── tests/                       # Unit and integration test suites
     │   │   ├── test_room_analyzer.py    # Unit tests for V2 components
-    │   │   └── test_api_v2.py           # Integration & V1 regression test suite
+    │   │   ├── test_room_analyzer.py    # Unit tests for room analysis components
+    │   │   ├── test_api_v2.py           # Integration & API regression test suite
+    │   │   └── test_tile_and_diffusion.py# Unit tests for V2.5/V3/V4 tile engines & diffusion
     │   └── app/
     │       ├── __init__.py
-    │       ├── config.py                # Pydantic Settings, dynamic paths & CORS configuration
-    │       ├── main.py                  # FastAPI Application Factory with lifespan model preloader
+    │       ├── config.py                # Strongly-typed Pydantic Settings & dynamic paths
+    │       ├── main.py                  # FastAPI Application Factory with timing middleware & error handlers
     │       ├── core/
     │       │   ├── __init__.py
-    │       │   ├── logger.py            # Production structured logging (sam3.server, sam3.model, sam3.api)
-    │       │   ├── sam3_service.py      # Singleton managing model lifecycle, GPU cache & session state
-    │       │   └── mask_engine.py       # High-performance alpha mask blending & BBox rendering
-    │       ├── v2_room_analysis/        # SAM 3 V2 Autonomous Room Analysis Module
-    │       │   ├── __init__.py
-    │       │   ├── analyzer.py          # Master RoomAnalyzer orchestrator
-    │       │   ├── detector.py          # Multi-concept prompt candidate extractor
-    │       │   ├── mask_refiner.py      # Hierarchical subtraction, multi-wall plane splitting
-    │       │   ├── region_classifier.py # Spatial priors & multi-signal confidence scoring
-    │       │   ├── depth_estimator.py   # Perspective geometry & surface normal reasoning
-    │       │   └── cache.py             # SHA-256 in-memory LRU image cache
-    │       ├── schemas/
-    │       │   ├── __init__.py
-    │       │   ├── requests.py          # V1 Pydantic models for API validation
-    │       │   └── room.py              # V2 Pydantic models for Room Analysis
-    │       └── api/
-    │           ├── router.py            # Root API router aggregation
-    │           └── v1/
-    │               ├── endpoints_health.py        # GET /api/v1/health & POST /api/v1/device/switch
-    │               ├── endpoints_image.py         # POST /api/v1/set-image & POST /api/v1/reset
-    │               ├── endpoints_segment_text.py  # POST /api/v1/segment-text
-    │               ├── endpoints_segment_point.py # POST /api/v1/segment-points
-    │               └── endpoints_room.py          # POST /api/v1/analyze-room (V2)
+    │       │   ├── logger.py            # Structured logging (sam3.server, sam3.model, sam3.api)
+    │       │   ├── sam3_service.py      # Thread-safe SAM 3 singleton with CUDA AMP float16 & inference_mode
+    │       │   ├── session_manager.py   # Multi-session LRU cache & active mask state manager
+    │       │   ├── mask_engine.py       # High-performance alpha mask blending & BBox rendering
+    │       │   └── exceptions.py        # Centralized application exception hierarchy
+    │       ├── services/                # Pure ML & Domain Services
+    │       │   ├── room_analysis/       # V2 Autonomous room understanding, depth, normals, refiner
+    │       │   ├── tile_engine/         # V2.5 & V3 PBR shaders, RANSAC perspective, tile catalog
+    │       │   └── generative/          # V4 Latent diffusion inpainting & prompt architect
+    │       ├── db/                      # Database Layer (Async SQLite WAL mode, models, repository)
+    │       ├── storage/                 # Local disk storage driver with path traversal guards & atomic writes
+    │       ├── schemas/                 # Pydantic DTO validation models (common, room, tile, generative, auth, admin)
+    │       └── api/                     # Versioned API Routers
+    │           ├── router.py            # Master aggregated router (/api/v1)
+    │           ├── v1/                  # V1 Foundation endpoints (health, image, text, points, auth, admin)
+    │           ├── v2/                  # V2 Autonomous room analysis & saved history endpoints
+    │           ├── v2_5/                # V2.5 Tile visualizer endpoints
+    │           ├── v3/                  # V3.0 PBR neural perspective tile endpoints
+    │           └── v4/                  # V4.0 AI generative diffusion inpainting endpoints
     │
     └── frontend/                        # Next.js 14 Modern Web UI
         ├── package.json                 # Node dependencies (Next.js, Tailwind, Lucide)

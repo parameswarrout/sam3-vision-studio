@@ -9,13 +9,13 @@ from PIL import Image
 from typing import Dict, Any, Optional, Tuple
 
 from app.core import api_logger
-from app.v4_generative_diffusion.prompt_architect import prompt_architect
+from app.services.generative.prompt_architect import prompt_architect
 
 # Default open-weight inpainting model
 from pathlib import Path
 
 DEFAULT_INPAINT_MODEL_ID = "runwayml/stable-diffusion-inpainting"
-FALLBACK_INPAINT_MODEL_ID = "stabilityai/stable-diffusion-2-inpainting"
+FALLBACK_INPAINT_MODEL_ID = "runwayml/stable-diffusion-inpainting"
 LOCAL_MODEL_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "models" / "diffusion_inpaint"
 
 class CPUDiffusionEngine:
@@ -69,13 +69,26 @@ class CPUDiffusionEngine:
             # 1. Check if local directory exists first
             if LOCAL_MODEL_PATH.exists() and (LOCAL_MODEL_PATH / "model_index.json").exists():
                 api_logger.info(f"[CPUDiffusionEngine] Loading Diffusion Model directly from local directory '{LOCAL_MODEL_PATH}'...")
-                self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
-                    str(LOCAL_MODEL_PATH),
-                    torch_dtype=torch.float32,
-                    safety_checker=None,
-                    low_cpu_mem_usage=True,
-                    local_files_only=True,
-                )
+                has_fp16 = any(LOCAL_MODEL_PATH.rglob("*.fp16.safetensors")) or any(LOCAL_MODEL_PATH.rglob("*.fp16.bin"))
+                
+                try:
+                    self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
+                        str(LOCAL_MODEL_PATH),
+                        torch_dtype=torch.float32,
+                        variant="fp16" if has_fp16 else None,
+                        safety_checker=None,
+                        low_cpu_mem_usage=True,
+                        local_files_only=True,
+                    )
+                except Exception as local_err:
+                    api_logger.warning(f"[CPUDiffusionEngine] Loading with variant failed ({local_err}), retrying default...")
+                    self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
+                        str(LOCAL_MODEL_PATH),
+                        torch_dtype=torch.float32,
+                        safety_checker=None,
+                        low_cpu_mem_usage=True,
+                        local_files_only=True,
+                    )
             else:
                 token = self._get_hf_token()
                 api_logger.info(f"[CPUDiffusionEngine] Loading Diffusion Inpainting Model '{self.model_id}' (HF Token: {'Present' if token else 'None'})...")
@@ -108,7 +121,7 @@ class CPUDiffusionEngine:
 
             self.pipe.to("cpu")
             load_sec = round(time.time() - t0, 1)
-            api_logger.info(f"[CPUDiffusionEngine] Successfully loaded '{self.model_id}' onto CPU in {load_sec}s.")
+            api_logger.info(f"[CPUDiffusionEngine] Successfully loaded model onto CPU in {load_sec}s.")
 
         except Exception as e:
             api_logger.error(f"[CPUDiffusionEngine] Primary model loading failed: {e}. Trying fallback...", exc_info=True)

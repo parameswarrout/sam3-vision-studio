@@ -1,11 +1,10 @@
 import io
-import base64
+import asyncio
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, UploadFile, File, Response
-from PIL import Image
+from fastapi import APIRouter, HTTPException, Response
 
-from app.core import sam3_service, api_logger
+from app.core import sam3_service, api_logger, session_manager
 from app.config import settings
 from app.schemas.v2_5_tile import (
     TileCatalogItem,
@@ -15,19 +14,19 @@ from app.schemas.v2_5_tile import (
     TileRenderRequest,
     TileRenderResponse,
 )
-from app.v2_5_tile_visualizer.tile_catalog import (
+from app.services.tile_engine import (
     TILE_CATALOG,
     get_tile_by_id,
     generate_tile_texture,
     ensure_all_tile_textures,
+    tile_detector,
+    tile_renderer,
 )
-from app.v2_5_tile_visualizer.tile_detector import tile_detector
-from app.v2_5_tile_visualizer.tile_renderer import tile_renderer
 
 router = APIRouter()
 
-# In-memory session cache for active detected mask
-_active_surface_session: Dict[str, Any] = {
+# Backward-compatibility alias for legacy code
+_active_surface_session = {
     "image_id": None,
     "surface_type": "floor",
     "raw_mask": None,
@@ -69,29 +68,28 @@ async def get_tile_catalog():
 
 @router.post("/detect-surface", response_model=SurfaceDetectResponse)
 async def detect_room_surface(req: SurfaceDetectRequest):
-    """
-    Executes SAM 3 surface detection for Floor or Wall planes with obstacle carving.
-    """
-    if sam3_service.current_image is None:
+    """Executes SAM 3 surface detection for Floor or Wall planes with obstacle carving."""
+    active_image = session_manager.get_active_image()
+    if active_image is None:
         raise HTTPException(
             status_code=400,
             detail="No active room photo found. Please select or upload a room image first."
         )
 
     try:
-        current_img_id = id(sam3_service.current_image)
-        api_logger.info(f"[V2.5 API] Detect Surface: type='{req.surface_type}', confidence={req.confidence:.2f}, image_id={current_img_id}")
-        det = tile_detector.detect_surface(
+        api_logger.info(f"[V2.5 API] Detect Surface: type='{req.surface_type}', confidence={req.confidence:.2f}")
+        det = await asyncio.to_thread(
+            tile_detector.detect_surface,
             surface_type=req.surface_type,
             confidence=req.confidence,
             custom_prompt=req.custom_prompt,
         )
 
-        # Cache mask in active session bound to current image ID
-        _active_surface_session["image_id"] = current_img_id
-        _active_surface_session["surface_type"] = req.surface_type
-        _active_surface_session["raw_mask"] = det["raw_mask"]
-        _active_surface_session["composite_mask_b64"] = det["composite_mask_base64"]
+        session_manager.set_surface_mask(
+            surface_type=req.surface_type,
+            raw_mask=det["raw_mask"],
+            composite_mask_b64=det["composite_mask_base64"],
+        )
 
         surface_masks_schema = [
             SurfaceMaskInfo(
@@ -119,30 +117,26 @@ async def detect_room_surface(req: SurfaceDetectRequest):
 
 @router.post("/render-tile", response_model=TileRenderResponse)
 async def render_tile_visualizer(req: TileRenderRequest):
-    """
-    Renders selected tile pattern onto the detected surface with perspective and lighting blending.
-    """
-    if sam3_service.current_image is None:
+    """Renders selected tile pattern onto the detected surface with perspective and lighting blending."""
+    active_image = session_manager.get_active_image()
+    if active_image is None:
         raise HTTPException(
             status_code=400,
             detail="No active room image in session. Please upload a room photo first."
         )
 
-    current_img_id = id(sam3_service.current_image)
+    _, mask, comp_b64 = session_manager.get_surface_mask()
 
-    # Check if we have a detected surface mask for the CURRENT active image
-    cached_img_id = _active_surface_session.get("image_id")
-    mask = _active_surface_session.get("raw_mask", None)
-
-    if mask is None or cached_img_id != current_img_id:
+    if mask is None:
         raise HTTPException(
             status_code=400,
             detail=f"No detected {req.surface_type} surface found for this image. Please click '⚡ Detect Surface (SAM 3)' first."
         )
 
     try:
-        render_res = tile_renderer.render_tiled_surface(
-            original_img=sam3_service.current_image,
+        render_res = await asyncio.to_thread(
+            tile_renderer.render_tiled_surface,
+            original_img=active_image,
             mask=mask,
             tile_id=req.tile_id,
             surface_type=req.surface_type,
@@ -160,7 +154,7 @@ async def render_tile_visualizer(req: TileRenderRequest):
             grout_crevice_depth=req.grout_crevice_depth,
         )
 
-        _active_surface_session["last_render_b64"] = render_res["rendered_image_base64"]
+        session_manager.set_last_render(render_res["rendered_image_base64"])
 
         tile_meta = get_tile_by_id(req.tile_id)
         tile_name = tile_meta["name"] if tile_meta else req.tile_id
@@ -172,7 +166,7 @@ async def render_tile_visualizer(req: TileRenderRequest):
             surface_type=req.surface_type,
             blending_mode=req.blending_mode,
             rendered_image_base64=render_res["rendered_image_base64"],
-            mask_overlay_base64=_active_surface_session.get("composite_mask_b64", ""),
+            mask_overlay_base64=comp_b64 or "",
             execution_time_ms=render_res["execution_time_ms"],
         )
     except Exception as e:
@@ -186,3 +180,4 @@ async def get_raw_tile_texture(tile_id: str):
     buf = io.BytesIO()
     tex_img.save(buf, format="PNG")
     return Response(content=buf.getvalue(), media_type="image/png")
+

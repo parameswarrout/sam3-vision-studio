@@ -8,9 +8,9 @@ from PIL import Image
 from typing import Dict, Any, Optional, Tuple
 
 from app.core import api_logger
-from app.v3_tile_visualizer.tile_catalog import get_tile_by_id, generate_tile_texture
-from app.v3_tile_visualizer.vanishing_point_estimator import vanishing_point_estimator
-from app.v3_tile_visualizer.pbr_material_engine import pbr_material_engine
+from app.services.tile_engine.tile_catalog import get_tile_by_id, generate_tile_texture
+from app.services.tile_engine.vanishing_point_estimator import vanishing_point_estimator
+from app.services.tile_engine.pbr_material_engine import pbr_material_engine
 
 class PerspectiveTileRendererV3:
     """
