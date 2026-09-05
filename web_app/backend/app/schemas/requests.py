@@ -30,11 +30,22 @@ class BoundingBox(BaseModel):
     x2: float
     y2: float
 
+class SegmentedRegionItem(BaseModel):
+    index: int
+    label: Optional[str] = None
+    cutout_base64: Optional[str] = None
+    cropped_base64: Optional[str] = None
+    bbox: Optional[List[float]] = None
+
 class SegmentationResponse(BaseModel):
     success: bool
     message: str
     num_objects: int
     image_base64: Optional[str] = None
+    cutout_image_base64: Optional[str] = None
+    cropped_cutout_base64: Optional[str] = None
+    mask_only_base64: Optional[str] = None
+    regions: Optional[List[SegmentedRegionItem]] = None
     boxes: Optional[List[List[float]]] = None
     labels: Optional[List[str]] = None
     execution_time_ms: float

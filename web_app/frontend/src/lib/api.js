@@ -497,4 +497,61 @@ export const apiClient = {
     }
     return await res.json();
   },
+
+  /**
+   * V5.0: Get Authored PBR Material Catalog
+   */
+  async getCatalogV5() {
+    const res = await fetch(`${API_BASE_URL}/v5/surface-replacement/catalog`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch V5 PBR catalog");
+    return await res.json();
+  },
+
+  /**
+   * V5.0: Detect Surface (Stage 1)
+   */
+  async detectSurfaceV5(params) {
+    const res = await fetch(`${API_BASE_URL}/v5/surface-replacement/detect-surface`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `V5 surface detection failed (${res.status})`);
+    }
+    return await res.json();
+  },
+
+  /**
+   * V5.0: Execute Complete Physically-Based Replacement (Stages 1-5)
+   */
+  async renderReplacementV5(params) {
+    const res = await fetch(`${API_BASE_URL}/v5/surface-replacement/render-replacement`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `V5 physically-based render failed (${res.status})`);
+    }
+    return await res.json();
+  },
+
+  /**
+   * V5.0: Offline Catalog Variant Generator (Stage 6)
+   */
+  async generateOfflineVariantsV5(params) {
+    const res = await fetch(`${API_BASE_URL}/v5/surface-replacement/offline-catalog-generator`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `V5 offline variant generation failed (${res.status})`);
+    }
+    return await res.json();
+  },
 };

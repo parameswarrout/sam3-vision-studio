@@ -61,6 +61,7 @@ export function ControlPanel({
             onRun={onRunTextPrompt}
             isLoading={isLoading}
             hasImage={hasImage}
+            onImageUpload={onImageUpload}
           />
         ) : (
           <PointPromptTab

@@ -38,12 +38,23 @@ async def segment_by_text(req: TextPromptRequest):
             labels=labels,
         )
 
-        api_logger.info(f"Successfully generated overlay with {num_found} mask(s) for '{req.prompt}'.")
+        cutout_b64, cropped_b64, mask_b64, regions = MaskEngine.generate_cutouts(
+            image=sam3_service.current_image,
+            masks=masks,
+            boxes=boxes,
+            labels=labels,
+        )
+
+        api_logger.info(f"Successfully generated overlay and cutouts with {num_found} mask(s) for '{req.prompt}'.")
         return SegmentationResponse(
             success=True,
             message=f"Successfully segmented {num_found} object(s) matching '{req.prompt}'.",
             num_objects=num_found,
             image_base64=MaskEngine.pil_to_base64(overlay_img),
+            cutout_image_base64=cutout_b64,
+            cropped_cutout_base64=cropped_b64,
+            mask_only_base64=mask_b64,
+            regions=regions,
             boxes=boxes,
             labels=labels,
             execution_time_ms=res["execution_time_ms"],
