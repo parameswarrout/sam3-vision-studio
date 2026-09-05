@@ -11,7 +11,7 @@ export function useSamSession() {
   const [points, setPoints] = useState([]);
   const [clickMode, setClickMode] = useState(CLICK_MODES.POSITIVE);
   const [textPrompt, setTextPrompt] = useState("person");
-  const [confidence, setConfidence] = useState(0.10);
+  const [confidence, setConfidence] = useState(0.70);
   const [activeTab, setActiveTab] = useState("text");
 
   // Isolated Cutout & Detected Region States

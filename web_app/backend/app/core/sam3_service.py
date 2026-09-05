@@ -156,7 +156,7 @@ class SAM3Service:
                 "status": "ready"
             }
 
-    def segment_text(self, prompt: str, confidence: float = 0.10) -> Dict[str, Any]:
+    def segment_text(self, prompt: str, confidence: float = 0.70) -> Dict[str, Any]:
         """Runs text prompt open-vocabulary grounding."""
         self.ensure_model()
         active_img = self.current_image

@@ -94,7 +94,7 @@ export const apiClient = {
   /**
    * Segment using Text Prompt (V1)
    */
-  async segmentText(prompt, confidence = 0.10) {
+  async segmentText(prompt, confidence = 0.70) {
     const res = await fetch(`${API_BASE_URL}/segment-text`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

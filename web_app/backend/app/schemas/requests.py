@@ -11,7 +11,7 @@ class PointPromptRequest(BaseModel):
 
 class TextPromptRequest(BaseModel):
     prompt: str = Field(..., description="Text query / concept to ground, e.g., 'person', 'red sports car'")
-    confidence: float = Field(0.10, ge=0.01, le=1.0, description="Confidence threshold for detection")
+    confidence: float = Field(0.70, ge=0.01, le=1.0, description="Confidence threshold for detection")
 
 class DeviceSwitchRequest(BaseModel):
     device: str = Field(..., description="'cuda' or 'cpu'")
