@@ -44,3 +44,11 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Database & Runtime Storage
+*.db
+*.db-shm
+*.db-wal
+web_app/backend/data/storage/
+web_app/backend/data/*.db
+web_app/backend/frontend/

@@ -92,13 +92,14 @@ The V4.0 module (`/v4-generative-studio`) brings high-end generative diffusion i
     ├── backend/                           # FastAPI Server (Port 8000)
     │   ├── run.py                         # Server runner with path resolution
     │   └── app/
-    │       ├── core/                      # sam3_service.py, mask_engine.py, logger.py
-    │       ├── room_analysis/             # V2 Analyzer, detector, refiner, classifier
-    │       ├── v2_5_tile_visualizer/      # V2.5 Tile Visualizer package
-    │       ├── v3_tile_visualizer/        # V3.0 Neural PBR & RANSAC Tile Visualizer package
-    │       ├── v4_generative_diffusion/   # V4.0 CPU Latent Diffusion Inpainting package
-    │       ├── schemas/                   # Pydantic schemas (v4_generative.py, v3_tile.py, v2_5_tile.py)
-    │       └── api/v1/                    # REST endpoints (health, image, text, points, room, v2.5, v3, v4)
+    │       ├── core/                      # Thread-safe SAM 3, SessionManager, exceptions, logger
+    │       ├── services/                  # Pure ML & Domain Services (room_analysis/, tile_engine/, generative/)
+    │       ├── db/                        # Async SQLite WAL, models, repositories
+    │       ├── storage/                   # Atomic local storage driver with traversal guards
+    │       ├── schemas/                   # Pydantic validation schemas (common, room, tile, generative, auth, admin)
+    │       ├── api/                       # Versioned API Routers (v1/, v2/, v2_5/, v3/, v4/, router.py)
+    │       ├── config.py                  # Pydantic Settings
+    │       └── main.py                    # App factory & request timing middleware
     └── frontend/                          # Next.js 14 Web Studio (Port 3000)
         └── src/
             ├── app/                       # / (V1), /room-analysis (V2), /tile-visualizer (V2.5), /v3-tile-visualizer (V3.0), /v4-generative-studio (V4.0)

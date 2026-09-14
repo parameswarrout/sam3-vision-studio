@@ -66,9 +66,19 @@ export function TextPromptTab({
             <Sliders className="w-3.5 h-3.5 text-indigo-400" />
             Confidence Threshold
           </span>
-          <span className="font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-            {confidence.toFixed(2)}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setConfidence(0.70)}
+              className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition-all font-semibold"
+              title="Reset to Max (0.70)"
+            >
+              Max
+            </button>
+            <span className="font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+              {confidence.toFixed(2)}
+            </span>
+          </div>
         </div>
         <input
           type="range"

@@ -10,22 +10,22 @@ A production-grade, modular, plug-and-play web application built with **Next.js 
 web_app/
 ├── backend/                  # Python FastAPI Backend
 │   ├── app/
-│   │   ├── config.py         # App settings & auto path detection
-│   │   ├── core/
-│   │   │   ├── sam3_service.py # Singleton SAM 3 service & session memory
-│   │   │   └── mask_engine.py  # Fast mask blending, palettes, base64 encoder
-│   │   ├── schemas/          # Pydantic request & response validators
-│   │   ├── api/
-│   │   │   └── v1/           # Modular endpoints (Health, Image, Text, Points)
-│   │   └── main.py           # FastAPI factory & CORS middleware
+│   │   ├── config.py         # Strongly-typed settings & path detection
+│   │   ├── core/             # sam3_service.py (AMP float16), session_manager.py, exceptions.py, logger.py
+│   │   ├── services/         # Pure ML & Domain Services (room_analysis/, tile_engine/, generative/)
+│   │   ├── db/               # Async SQLite WAL, models.py, repository.py, user_repository.py
+│   │   ├── storage/          # Local disk storage driver with path traversal guards & atomic writes
+│   │   ├── schemas/          # Pydantic request & response validators (v1, v2, v2.5, v3, v4, auth, admin)
+│   │   ├── api/              # Versioned API Routers (v1/, v2/, v2_5/, v3/, v4/, router.py)
+│   │   └── main.py           # FastAPI factory, timing middleware & global exception handlers
 │   ├── requirements.txt
 │   └── run.py                # Server runner
 │
 ├── frontend/                 # Next.js (JavaScript + Tailwind CSS)
 │   ├── src/
-│   │   ├── app/              # Next.js App Router (layout, page, global css)
-│   │   ├── components/       # Reusable UI widgets (Canvas, Panels, Badges, Metrics)
-│   │   ├── hooks/            # Custom React hooks (useSamSession, useBackendHealth)
+│   │   ├── app/              # Next.js App Router (layout, page, global css, v2, v2.5, v3, v4 routes)
+│   │   ├── components/       # Reusable UI widgets (Canvas, Panels, Badges, Metrics, Studio)
+│   │   ├── hooks/            # Custom React hooks (useSamSession, useTileVisualizerV3, useGenerativeStudio)
 │   │   └── lib/              # Modular API client & constants
 │   └── package.json
 │

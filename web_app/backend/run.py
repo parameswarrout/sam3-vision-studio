@@ -36,10 +36,10 @@ def main():
     logger.info("=" * 60)
     
     uvicorn.run(
-        app,
+        "app.main:app",
         host=settings.HOST,
         port=settings.PORT,
-        reload=False,
+        reload=True,
         log_level="info",
     )
 

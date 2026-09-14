@@ -7,6 +7,7 @@ import { Header } from "@/components/common/Header";
 import { InteractiveCanvas } from "@/components/v1_manual/canvas/InteractiveCanvas";
 import { CanvasControls } from "@/components/v1_manual/canvas/CanvasControls";
 import { ControlPanel } from "@/components/v1_manual/panels/ControlPanel";
+import { DetectedRegionPreview } from "@/components/v1_manual/preview/DetectedRegionPreview";
 import { StatusLogger } from "@/components/v1_manual/metrics/StatusLogger";
 import { apiClient } from "@/lib/api";
 
@@ -27,6 +28,12 @@ export default function HomePage() {
     setConfidence,
     activeTab,
     setActiveTab,
+    cutoutImage,
+    croppedCutout,
+    maskOnlyImage,
+    detectedRegions,
+    lastPrompt,
+    numDetected,
     isLoading,
     loadingText,
     isUploading,
@@ -131,7 +138,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 3. Bottom Execution Status & Metrics Logger */}
+        {/* 3. Isolated Detected Region Preview & Export Center */}
+        <DetectedRegionPreview
+          hasImage={hasImage}
+          originalImage={originalImage}
+          cutoutImage={cutoutImage}
+          croppedCutout={croppedCutout}
+          maskOnlyImage={maskOnlyImage}
+          detectedRegions={detectedRegions}
+          lastPrompt={lastPrompt}
+          numDetected={numDetected}
+          imageMeta={imageMeta}
+          isLoading={isLoading}
+          loadingText={loadingText}
+        />
+
+        {/* 4. Bottom Execution Status & Metrics Logger */}
         <StatusLogger statusLog={statusLog} />
       </main>
     </div>

@@ -23,6 +23,16 @@ from app.schemas.v2_5_tile import (
     TileRenderResponse,
 )
 
+from app.schemas.v5_surface import (
+    V5DetectSurfaceRequest,
+    V5DetectSurfaceResponse,
+    V5RenderRequest,
+    V5RenderResponse,
+    V5MetricsReport,
+    V5OfflineVariantRequest,
+    V5OfflineVariantResponse,
+)
+
 __all__ = [
     "PointPromptItem",
     "PointPromptRequest",
@@ -41,4 +51,11 @@ __all__ = [
     "SurfaceMaskInfo",
     "TileRenderRequest",
     "TileRenderResponse",
+    "V5DetectSurfaceRequest",
+    "V5DetectSurfaceResponse",
+    "V5RenderRequest",
+    "V5RenderResponse",
+    "V5MetricsReport",
+    "V5OfflineVariantRequest",
+    "V5OfflineVariantResponse",
 ]

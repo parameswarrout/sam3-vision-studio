@@ -77,11 +77,12 @@ class RoomSession(Base):
     
     image_hash = Column(String(64), index=True, nullable=False)
     room_title = Column(String(200), default="Room Analysis")
+    room_category = Column(String(50), default="interior_room", nullable=True)
     image_storage_path = Column(String(500), nullable=False)
     thumbnail_base64 = Column(Text, nullable=True)
     
-    image_width = Column(Integer, nullable=False)
-    image_height = Column(Integer, nullable=False)
+    img_width = Column(Integer, nullable=False)
+    img_height = Column(Integer, nullable=False)
     
     overall_confidence = Column(Float, nullable=False)
     execution_time_ms = Column(Float, default=0.0)
@@ -89,9 +90,8 @@ class RoomSession(Base):
     
     wall_count = Column(Integer, default=0)
     floor_count = Column(Integer, default=0)
-    openings_count = Column(Integer, default=0)
+    opening_count = Column(Integer, default=0)
     furniture_count = Column(Integer, default=0)
-    total_surfaces = Column(Integer, default=0)
     
     created_at = Column(DateTime(timezone=True), default=utc_now, index=True)
 
@@ -107,7 +107,7 @@ class SurfaceRegion(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     room_session_id = Column(String(36), ForeignKey("room_sessions.id", ondelete="CASCADE"), index=True, nullable=False)
     
-    surface_type = Column(String(30), nullable=False)   # 'wall', 'floor', 'window', 'door', 'furniture', 'ceiling'
+    surface_type = Column(String(30), nullable=False, index=True)   # 'wall', 'floor', 'window', 'door', 'furniture', 'ceiling'
     label = Column(String(100), nullable=False)
     confidence = Column(Float, nullable=False)
     area_ratio = Column(Float, nullable=False)

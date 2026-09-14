@@ -27,11 +27,12 @@ e:\AI\Segmentation_model_by_meta\
 ├── web_app/
 │   ├── backend/                         # FastAPI Python Server (Port 8000)
 │   │   ├── app/
-│   │   │   ├── api/v1/__init__.py       # Mounted routes (/api/v1/v3/tiles)
+│   │   │   ├── api/v3/                  # V3 REST Endpoints (/api/v1/v3/tiles)
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── endpoints_tiles.py   # /catalog, /detect-surface, /render-tile, /texture
 │   │   │   ├── schemas/v3_tile.py       # Pydantic Request/Response models for V3
-│   │   │   └── v3_tile_visualizer/      # DEDICATED V3 BACKEND PACKAGE
-│   │   │       ├── __init__.py          # Package exports
-│   │   │       ├── router.py            # REST Endpoints: /catalog, /detect-surface, /render-tile, /texture
+│   │   │   └── services/tile_engine/    # UNIFIED TILE & PBR ENGINE
+│   │   │       ├── __init__.py          # Service exports
 │   │   │       ├── vanishing_point_estimator.py # RANSAC Vanishing Point & Homography Solver
 │   │   │       ├── pbr_material_engine.py       # Sobel Normal Bump, Grout AO, Fresnel Window Reflections
 │   │   │       ├── tile_renderer.py     # Master V3 PBR Multi-Engine Renderer

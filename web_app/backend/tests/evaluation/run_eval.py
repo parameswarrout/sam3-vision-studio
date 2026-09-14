@@ -7,10 +7,10 @@ from PIL import Image
 # Ensure backend root in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from app.v2_room_analysis.mask_refiner import MaskRefiner
-from app.v2_room_analysis.geometry_analyzer import GeometryAnalyzer
-from app.v2_room_analysis.region_classifier import RegionClassifier
-from app.v2_room_analysis.depth_estimator import DepthEstimator
+from app.services.room_analysis.mask_refiner import MaskRefiner
+from app.services.room_analysis.geometry_analyzer import GeometryAnalyzer
+from app.services.room_analysis.region_classifier import RegionClassifier
+from app.services.room_analysis.depth_estimator import DepthEstimator
 from tests.evaluation.metrics import compute_iou, compute_dice, compute_precision_recall, compute_boundary_f1
 
 def run_evaluation():

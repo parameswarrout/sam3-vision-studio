@@ -36,9 +36,11 @@ e:\AI\Segmentation_model_by_meta\
 │   │   ├── app/
 │   │   │   ├── core/
 │   │   │   │   ├── sam3_service.py      # SAM3Service singleton (CUDA model management, embeddings)
-│   │   │   │   └── database.py          # SQLite database schema, user audits, telemetry
-│   │   │   ├── v2_5_tile_visualizer/
-│   │   │   │   ├── router.py            # REST API routes: /catalog, /detect-surface, /render-tile
+│   │   │   │   ├── session_manager.py   # Multi-session LRU cache & surface mask state
+│   │   │   │   └── exceptions.py        # Centralized error hierarchy
+│   │   │   ├── api/v2_5/
+│   │   │   │   └── endpoints_tiles.py   # REST API routes: /catalog, /detect-surface, /render-tile
+│   │   │   ├── services/tile_engine/
 │   │   │   │   ├── tile_catalog.py      # 16 MyTyles product metadata, aliases, texture loader
 │   │   │   │   ├── tile_detector.py     # Multi-prompt SAM 3 grounding + obstacle subtractor
 │   │   │   │   └── tile_renderer.py     # 5 Blending Engines, Homography matrix, normal estimator

@@ -45,6 +45,14 @@ export function GenerativeStudioWorkspace() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Performance Warning Alert Banner */}
+      <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-semibold shadow-lg">
+        <span className="text-base shrink-0">⚠️</span>
+        <span>
+          <strong>Notice:</strong> This tab is <strong>not working as expected / underperforming</strong>. Features here may experience synthesis inaccuracies or slow CPU execution.
+        </span>
+      </div>
+
       {/* Top Banner & Hero */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-purple-950/40 to-slate-900 p-6 rounded-3xl border border-pink-500/20 shadow-2xl backdrop-blur-xl">
         <div className="space-y-1">

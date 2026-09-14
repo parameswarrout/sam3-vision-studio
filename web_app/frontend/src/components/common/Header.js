@@ -90,6 +90,7 @@ export function Header({
   const { user, isAuthenticated, login, register, logout, switchDemoRole } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isModesDropdownOpen, setIsModesDropdownOpen] = useState(false);
 
   return (
     <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur-2xl sticky top-0 z-50 shadow-md">
@@ -120,8 +121,9 @@ export function Header({
           </div>
         </div>
 
-        {/* Center: Main Navigation Tabs (V1, V2 & Admin) */}
+        {/* Center: Main Navigation Tabs & Modes Dropdown */}
         <nav className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-inner">
+          {/* Primary Quick Tab: Manual Prompting */}
           <Link
             href="/"
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
@@ -141,6 +143,7 @@ export function Header({
             </span>
           </Link>
 
+          {/* Primary Quick Tab: Room Analysis */}
           <Link
             href="/room-analysis"
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
@@ -162,93 +165,177 @@ export function Header({
             </span>
           </Link>
 
-          {/* V2.5 Tile Visualizer Tab */}
-          <Link
-            href="/tile-visualizer"
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeNav === "tile-visualizer"
-                ? "bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-500 text-white shadow-md shadow-emerald-600/40 ring-1 ring-emerald-400"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Tile Visualizer</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
-                activeNav === "tile-visualizer"
-                  ? "bg-white/30 text-white"
-                  : "bg-slate-800 text-emerald-300 border border-emerald-500/30"
+          {/* Dropdown Selector for All Studio Modes & Engines */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsModesDropdownOpen((prev) => !prev)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                ["tile-visualizer", "v3-tile-visualizer", "v4-generative-studio", "v5-surface-engine", "admin"].includes(activeNav)
+                  ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/30 ring-1 ring-purple-400"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800/80"
               }`}
             >
-              V2.5
-            </span>
-          </Link>
+              <Compass className="w-3.5 h-3.5 text-indigo-300" />
+              <span>
+                {activeNav === "tile-visualizer"
+                  ? "Tile Visualizer (V2.5)"
+                  : activeNav === "v3-tile-visualizer"
+                  ? "PBR Visualizer (V3.0)"
+                  : activeNav === "v4-generative-studio"
+                  ? "AI Generative (V4.0)"
+                  : activeNav === "v5-surface-engine"
+                  ? "Surface Engine (V5.0)"
+                  : activeNav === "admin"
+                  ? "Admin Telemetry"
+                  : "Select Mode / Studio"}
+              </span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                  isModesDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
 
-          {/* V3.0 PBR Tile Visualizer Tab */}
-          <Link
-            href="/v3-tile-visualizer"
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeNav === "v3-tile-visualizer"
-                ? "bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 text-white shadow-md shadow-indigo-600/40 ring-1 ring-purple-400"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5 text-pink-300" />
-            <span>PBR Visualizer</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
-                activeNav === "v3-tile-visualizer"
-                  ? "bg-white/30 text-white"
-                  : "bg-gradient-to-r from-indigo-950 to-purple-950 text-pink-300 border border-pink-500/30"
-              }`}
-            >
-              V3.0
-            </span>
-          </Link>
+            {/* Dropdown Menu Modal */}
+            {isModesDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsModesDropdownOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-80 p-2 rounded-2xl bg-slate-900/98 border border-slate-700 shadow-2xl backdrop-blur-2xl z-50 space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Tile & Material Studios
+                  </div>
 
-          {/* V4.0 AI Generative Studio Tab */}
-          <Link
-            href="/v4-generative-studio"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeNav === "v4-generative-studio"
-                ? "bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 text-white shadow-md shadow-pink-600/40 ring-1 ring-pink-400"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-            }`}
-          >
-            <Wand2 className="w-3.5 h-3.5 text-amber-300" />
-            <span>AI Generative</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
-                activeNav === "v4-generative-studio"
-                  ? "bg-white/30 text-white"
-                  : "bg-gradient-to-r from-pink-950 to-amber-950 text-amber-300 border border-amber-500/30"
-              }`}
-            >
-              V4.0
-            </span>
-          </Link>
+                  {/* V2.5 Tile Visualizer */}
+                  <Link
+                    href="/tile-visualizer"
+                    onClick={() => setIsModesDropdownOpen(false)}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-xl transition-all ${
+                      activeNav === "tile-visualizer"
+                        ? "bg-indigo-600/30 border border-indigo-500/50"
+                        : "hover:bg-slate-800/70"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">Tile Visualizer</span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                          V2.5
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate">15+ curated tile catalogs & masking</p>
+                    </div>
+                  </Link>
 
-          {/* Admin Navigation Tab */}
-          <Link
-            href="/admin"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeNav === "admin"
-                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/40 ring-1 ring-purple-400"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5 text-purple-300" />
-            <span>Admin</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded font-mono uppercase font-black ${
-                activeNav === "admin"
-                  ? "bg-white/30 text-white"
-                  : "bg-slate-800 text-purple-300 border border-purple-500/30"
-              }`}
-            >
-              LOGS
-            </span>
-          </Link>
+                  {/* V3.0 PBR Visualizer */}
+                  <Link
+                    href="/v3-tile-visualizer"
+                    onClick={() => setIsModesDropdownOpen(false)}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-xl transition-all ${
+                      activeNav === "v3-tile-visualizer"
+                        ? "bg-indigo-600/30 border border-indigo-500/50"
+                        : "hover:bg-slate-800/70"
+                    }`}
+                  >
+                    <Compass className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">PBR Visualizer</span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300">
+                          V3.0
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate">Vanishing point snapping & micro-surface</p>
+                    </div>
+                  </Link>
+
+                  {/* Experimental Section */}
+                  <div className="pt-2 border-t border-slate-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center justify-between">
+                    <span>Experimental & Under Review</span>
+                    <span className="text-[9px] font-mono text-amber-300">⚠️ Issues Noted</span>
+                  </div>
+
+                  {/* V4.0 Generative Studio */}
+                  <Link
+                    href="/v4-generative-studio"
+                    onClick={() => setIsModesDropdownOpen(false)}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-xl transition-all ${
+                      activeNav === "v4-generative-studio"
+                        ? "bg-amber-600/20 border border-amber-500/40"
+                        : "hover:bg-slate-800/70"
+                    }`}
+                  >
+                    <Wand2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">AI Generative Studio</span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">
+                          V4.0
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-amber-300/90 font-semibold flex items-center gap-1 mt-0.5">
+                        <span>⚠️</span>
+                        <span>Not working as expected</span>
+                      </p>
+                    </div>
+                  </Link>
+
+                  {/* V5.0 Surface Engine */}
+                  <Link
+                    href="/v5-surface-engine"
+                    onClick={() => setIsModesDropdownOpen(false)}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-xl transition-all ${
+                      activeNav === "v5-surface-engine"
+                        ? "bg-rose-600/20 border border-rose-500/40"
+                        : "hover:bg-slate-800/70"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">Surface Engine</span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                          V5.0
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-rose-300/90 font-semibold flex items-center gap-1 mt-0.5">
+                        <span>⚠️</span>
+                        <span>Not working as expected</span>
+                      </p>
+                    </div>
+                  </Link>
+
+                  {/* Admin Section */}
+                  <div className="pt-2 border-t border-slate-800">
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsModesDropdownOpen(false)}
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl transition-all ${
+                        activeNav === "admin"
+                          ? "bg-purple-600/30 border border-purple-500/50"
+                          : "hover:bg-slate-800/70"
+                      }`}
+                    >
+                      <Shield className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white">Admin Telemetry & DB</span>
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">
+                            LOGS
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 truncate">System logs, user audits & database</p>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </nav>
 
         {/* Right: History, Device, Model Status & Prominent Sign In */}
